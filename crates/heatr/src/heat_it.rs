@@ -26,14 +26,21 @@ use crate::backend::BulkTransferDevice;
 use crate::error::{HeatrError, Result};
 use crate::prefs::Preferences;
 
+/// Phase of a treatment cycle, as reported by GET_STATUS.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HeatingPhase {
+    /// Heating element is actively on (`flags == 0x80`).
+    Heating,
+    /// Element is off but the post-heating apply phase is still in progress
+    /// (`flags == 0x00`, `phase != 0x00`).
+    Applying,
+    /// Treatment cycle fully ended; device is idle (`flags == 0x00`, `phase == 0x00`).
+    Done,
+}
+
 /// Status snapshot returned by a GET_STATUS + POLL pair.
 pub struct HeatingStatus {
-    /// Whether the heating element is currently on.
-    pub is_heating: bool,
-    /// Whether the treatment cycle has fully ended and the device is idle.
-    /// This is the correct exit condition — `!is_heating` alone is not enough,
-    /// as the device goes through a post-heating phase before returning to idle.
-    pub is_done: bool,
+    pub phase: HeatingPhase,
     /// Raw ADC temperature value (~0x46 cold, rises to ~0xE1 at peak).
     pub temperature: u8,
 }
@@ -125,11 +132,14 @@ impl HeatItDevice {
         self.poll()?;
         let flags = r[4];
         let phase = r[5];
-        Ok(HeatingStatus {
-            is_heating: flags == 0x80,
-            is_done: flags == 0x00 && phase == 0x00,
-            temperature: r[3],
-        })
+        let phase = if flags == 0x80 {
+            HeatingPhase::Heating
+        } else if phase != 0x00 {
+            HeatingPhase::Applying
+        } else {
+            HeatingPhase::Done
+        };
+        Ok(HeatingStatus { phase, temperature: r[3] })
     }
 
     /// Polls until the treatment cycle fully completes, calling `on_progress`
@@ -142,9 +152,8 @@ impl HeatItDevice {
     {
         loop {
             let status = self.poll_status()?;
-            let done = status.is_done;
             on_progress(&status);
-            if done {
+            if status.phase == HeatingPhase::Done {
                 break;
             }
             std::thread::sleep(std::time::Duration::from_millis(200));

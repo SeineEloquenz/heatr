@@ -2,7 +2,7 @@
 
 use clap::{Parser, Subcommand, ValueEnum};
 use indicatif::{ProgressBar, ProgressStyle};
-use heatr::{Api, Duration, Generation, HeatingStatus, Preferences, SkinSensitivity};
+use heatr::{Api, Duration, Generation, HeatingPhase, HeatingStatus, Preferences, SkinSensitivity};
 use std::time::Duration as StdDuration;
 
 #[derive(Parser)]
@@ -147,7 +147,7 @@ fn main() {
             pb.set_message("Heating…");
             let mut heated = false;
             let result = api.start(preferences, |status: &HeatingStatus| {
-                if status.is_heating {
+                if status.phase == HeatingPhase::Heating {
                     pb.set_message(format!("Heating    temp {:3}/225", status.temperature));
                 } else {
                     if !heated {

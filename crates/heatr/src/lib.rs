@@ -24,7 +24,7 @@ pub mod support;
 
 // Re-export the most commonly used types at the crate root.
 pub use error::HeatrError;
-pub use heat_it::HeatingStatus;
+pub use heat_it::{HeatingPhase, HeatingStatus};
 pub use prefs::{Duration, Generation, Preferences, SkinSensitivity};
 
 use device::BiteHealerMetadata;
