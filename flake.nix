@@ -52,8 +52,8 @@
       devShells = forAllSystems (
         system:
         let
-          buildToolsVersion = "37.0.0";
-          ndkVersion = "30.0.14904198";
+          buildToolsVersion = "36.0.0";
+          ndkVersion = "27.3.13750724";
           buildToolsVersions = [ buildToolsVersion ];
           platformVersions = [ "36" ];
           ndkVersions = [ ndkVersion ];
