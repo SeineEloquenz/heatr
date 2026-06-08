@@ -21,6 +21,47 @@ def fetch_xml(url: str) -> bytes:
         return r.read()
 
 
+def parse_revision(pkg):
+    """
+    Parse a package revision.
+
+    Returns:
+        (version_string, is_preview)
+
+    Examples:
+        36.0.0
+        30.0.14904198
+        30.0.14904198-rc1
+    """
+    revision = None
+
+    for child in pkg:
+        if strip_ns(child.tag) == "revision":
+            revision = child
+            break
+
+    if revision is None:
+        return None, False
+
+    parts = {}
+    for elem in revision:
+        tag = strip_ns(elem.tag)
+        if elem.text and elem.text.strip():
+            parts[tag] = elem.text.strip()
+
+    major = parts.get("major", "0")
+    minor = parts.get("minor", "0")
+    micro = parts.get("micro", "0")
+
+    version = f"{major}.{minor}.{micro}"
+
+    preview = parts.get("preview")
+    if preview is not None:
+        return f"{version}-rc{preview}", True
+
+    return version, False
+
+
 def parse_repo(data: bytes):
     root = ET.fromstring(data)
 
@@ -31,7 +72,9 @@ def parse_repo(data: bytes):
                 stable_id = elem.get("id", "channel-0")
                 break
 
-    build_tools, ndks, platforms = [], [], []
+    build_tools = []
+    ndks = []
+    platforms = []
 
     for pkg in root.iter():
         if strip_ns(pkg.tag) != "remotePackage":
@@ -51,14 +94,20 @@ def parse_repo(data: bytes):
         if is_obsolete or channel_ref != stable_id:
             continue
 
+        version, is_preview = parse_revision(pkg)
+
+        # Ignore RC / preview packages entirely.
+        if is_preview:
+            continue
+
         if path.startswith("build-tools;"):
-            v = path.split(";", 1)[1]
-            if all(part.isdigit() for part in v.split(".")):
-                build_tools.append(v)
+            if version:
+                build_tools.append(version)
+
         elif path.startswith("ndk;"):
-            v = path.split(";", 1)[1]
-            if all(part.isdigit() for part in v.split(".")):
-                ndks.append(v)
+            if version:
+                ndks.append(version)
+
         elif re.match(r"^platforms;android-\d+$", path):
             platforms.append(int(path.split("android-")[1]))
 
@@ -107,19 +156,26 @@ def main() -> int:
         print("ERROR: could not parse current versions from flake.nix", file=sys.stderr)
         return 1
 
-    cur_bt, cur_ndk, cur_plat = m_bt.group(1), m_ndk.group(1), m_plat.group(1)
+    cur_bt = m_bt.group(1)
+    cur_ndk = m_ndk.group(1)
+    cur_plat = m_plat.group(1)
 
     print(f"\nCurrent build-tools : {cur_bt}")
     print(f"Current NDK         : {cur_ndk}")
     print(f"Current platform    : android-{cur_plat}")
 
     changes = []
+
     if cur_bt != latest_bt:
         changes.append(f"- build-tools: `{cur_bt}` → `{latest_bt}`")
+
     if cur_ndk != latest_ndk:
         changes.append(f"- NDK: `{cur_ndk}` → `{latest_ndk}`")
+
     if cur_plat != latest_plat:
-        changes.append(f"- platform: `android-{cur_plat}` → `android-{latest_plat}`")
+        changes.append(
+            f"- platform: `android-{cur_plat}` → `android-{latest_plat}`"
+        )
 
     if not changes:
         print("\nAll Android SDK versions are up to date.")
@@ -129,16 +185,19 @@ def main() -> int:
     print("\nUpdates found:\n" + "\n".join(changes))
 
     updated = flake
+
     updated = re.sub(
         r'(buildToolsVersion\s*=\s*")[^"]+(")',
-        rf'\g<1>{latest_bt}\2',
+        rf"\g<1>{latest_bt}\2",
         updated,
     )
+
     updated = re.sub(
         r'(ndkVersion\s*=\s*")[^"]+(")',
-        rf'\g<1>{latest_ndk}\2',
+        rf"\g<1>{latest_ndk}\2",
         updated,
     )
+
     updated = re.sub(
         r'(platformVersions\s*=\s*\[)\s*"[^"]+"\s*(\])',
         rf'\g<1> "{latest_plat}" \2',
@@ -152,10 +211,13 @@ def main() -> int:
 
     pr_body = (
         "Automated update of Android SDK versions in `flake.nix`.\n\n"
-        "## Changes\n\n" + "\n".join(changes)
+        "## Changes\n\n"
+        + "\n".join(changes)
     )
+
     set_github_output("updated", "true")
     set_github_output("pr_body", pr_body)
+
     return 0
 
 
