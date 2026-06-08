@@ -5,7 +5,7 @@
 }:
 
 let
-  buildToolsVersion = "37.0.0";
+  buildToolsVersion = "36.0.0";
   ndkVersion = "29.0.14206865";
 
   buildToolsVersions = [ buildToolsVersion ];
