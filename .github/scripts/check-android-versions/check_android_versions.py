@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check for Android SDK version updates and update flake.nix."""
+"""Check for Android SDK version updates and update shell.nix."""
 
 import os
 import re
@@ -7,7 +7,7 @@ import sys
 import urllib.request
 import xml.etree.ElementTree as ET
 
-FLAKE_PATH = "flake.nix"
+SHELL_PATH = "shell.nix"
 REPO_URL = "https://dl.google.com/android/repository/repository2-3.xml"
 
 
@@ -145,15 +145,15 @@ def main() -> int:
     print(f"Latest NDK         : {latest_ndk}")
     print(f"Latest platform    : android-{latest_plat}")
 
-    with open(FLAKE_PATH) as f:
-        flake = f.read()
+    with open(SHELL_PATH) as f:
+        shell = f.read()
 
-    m_bt = re.search(r'buildToolsVersion\s*=\s*"([^"]+)"', flake)
-    m_ndk = re.search(r'ndkVersion\s*=\s*"([^"]+)"', flake)
-    m_plat = re.search(r'platformVersions\s*=\s*\[\s*"([^"]+)"\s*\]', flake)
+    m_bt = re.search(r'buildToolsVersion\s*=\s*"([^"]+)"', shell)
+    m_ndk = re.search(r'ndkVersion\s*=\s*"([^"]+)"', shell)
+    m_plat = re.search(r'platformVersions\s*=\s*\[\s*"([^"]+)"\s*\]', shell)
 
     if not m_bt or not m_ndk or not m_plat:
-        print("ERROR: could not parse current versions from flake.nix", file=sys.stderr)
+        print("ERROR: could not parse current versions from shell.nix", file=sys.stderr)
         return 1
 
     cur_bt = m_bt.group(1)
@@ -184,7 +184,7 @@ def main() -> int:
 
     print("\nUpdates found:\n" + "\n".join(changes))
 
-    updated = flake
+    updated = shell
 
     updated = re.sub(
         r'(buildToolsVersion\s*=\s*")[^"]+(")',
@@ -204,13 +204,13 @@ def main() -> int:
         updated,
     )
 
-    with open(FLAKE_PATH, "w") as f:
+    with open(SHELL_PATH, "w") as f:
         f.write(updated)
 
-    print("flake.nix updated.")
+    print("shell.nix updated.")
 
     pr_body = (
-        "Automated update of Android SDK versions in `flake.nix`.\n\n"
+        "Automated update of Android SDK versions in `shell.nix`.\n\n"
         "## Changes\n\n"
         + "\n".join(changes)
     )
