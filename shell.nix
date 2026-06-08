@@ -22,9 +22,15 @@ let
 
   };
 
+  jdk = pkgs.jdk25;
+
   androidSdk = pkgs.androidenv.composeAndroidPackages {
     inherit buildToolsVersions platformVersions ndkVersions;
     includeNDK = true;
+    includeEmulator = true;
+    includeSystemImages = true;
+    systemImageTypes = [ "google_apis_playstore" ];
+    abiVersions = [ "x86_64" ];
   };
 
   rustToolchain = pkgs.rust-bin.stable.latest.default.override {
@@ -42,8 +48,8 @@ in
   default = pkgs.mkShell {
     packages = [
       rustToolchain
+      jdk
       pkgs.cargo-ndk
-      pkgs.jdk21
       pkgs.gradle
       androidSdk.androidsdk
     ];
@@ -53,7 +59,7 @@ in
 
       ANDROID_NDK_ROOT = "${androidSdk.androidsdk}/libexec/android-sdk/ndk/${ndkVersion}";
 
-      JAVA_HOME = "${pkgs.jdk17}";
+      JAVA_HOME = "${jdk}";
 
       # aapt2 bundled in the AGP Maven artifact is a generic-Linux binary
       # that NixOS cannot run. Override it with the Nix-patched copy.
