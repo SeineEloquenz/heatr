@@ -23,6 +23,8 @@ rustPlatform.buildRustPackage {
 
   RUST_SRC_PATH = "${rustPlatform.rustLibSrc}";
 
+  cargoBuildFlags = [ "-p" "heatr-cli" ];
+
   cargoLock = {
     lockFile = ./Cargo.lock;
   };
