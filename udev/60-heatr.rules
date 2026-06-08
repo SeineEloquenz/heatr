@@ -1,0 +1,13 @@
+# Kamedi’s “heat it” mosquito/insect bite healer
+#
+# Originally from itchcraft <https://github.com/claui/itchcraft>
+# Copyright (c) 2024 Claudia Pellegrino
+# Licensed under the Apache License, Version 2.0
+ACTION=="add", ATTRS{idVendor}=="32f9", ATTRS{idProduct}=="0001", DRIVERS=="usb", MODE="0666"
+ACTION=="add", ATTRS{idVendor}=="32f9", ATTRS{idProduct}=="0002", DRIVERS=="usb", MODE="0666"
+ACTION=="add", ATTRS{idVendor}=="32f9", ATTRS{idProduct}=="0003", DRIVERS=="usb", MODE="0666"
+ACTION=="add", ATTRS{idVendor}=="32f9", ATTRS{idProduct}=="0004", DRIVERS=="usb", MODE="0666"
+ACTION=="add", ATTRS{idVendor}=="32f9", ATTRS{idProduct}=="0005", DRIVERS=="usb", MODE="0666"
+ACTION=="add", ATTRS{idVendor}=="32f9", ATTRS{idProduct}=="0006", DRIVERS=="usb", MODE="0666"
+ACTION=="add", ATTRS{idVendor}=="32f9", ATTRS{idProduct}=="fca9", DRIVERS=="usb", MODE="0666"
+ACTION=="add", ATTRS{idVendor}=="32f9", ATTRS{idProduct}=="fcba", DRIVERS=="usb", MODE="0666"

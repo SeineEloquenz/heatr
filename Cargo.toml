@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "crates/heatr",
+    "crates/heatr-cli",
+]
+resolver = "2"

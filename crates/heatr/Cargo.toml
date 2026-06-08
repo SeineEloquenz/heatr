@@ -1,0 +1,9 @@
+[package]
+name = "heatr"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+nusb = "0.2.3"
+thiserror = "2.0.18"
+tracing = "0.1.44"
