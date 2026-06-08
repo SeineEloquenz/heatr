@@ -17,7 +17,7 @@ jobs:
 
       - name: Check for Android SDK updates
         id: update
-        run: python3 .github/scripts/check_android_versions.py
+        run: python3 .github/scripts/check-android-versions/check_android_versions.py
 
       - name: Create or update pull request
         if: steps.update.outputs.updated == 'true'

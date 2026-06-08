@@ -39,6 +39,7 @@
         {
           default = pkgs.callPackage ./default.nix { };
           udev-rules = pkgs.callPackage ./udev { };
+          check-android-versions = pkgs.callPackage ./.github/scripts/check-android-versions { };
         }
       );
 
@@ -52,8 +53,8 @@
       devShells = forAllSystems (
         system:
         let
-          buildToolsVersion = "36.0.0";
-          ndkVersion = "27.3.13750724";
+          buildToolsVersion = "37.0.0";
+          ndkVersion = "30.0.14904198";
           buildToolsVersions = [ buildToolsVersion ];
           platformVersions = [ "36" ];
           ndkVersions = [ ndkVersion ];
