@@ -2,5 +2,6 @@
 members = [
     "crates/heatr",
     "crates/heatr-cli",
+    "crates/heatr-jni",
 ]
 resolver = "2"

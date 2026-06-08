@@ -36,8 +36,11 @@ pub struct UsbBulkTransferDevice {
 }
 
 impl UsbBulkTransferDevice {
-    /// Opens the given USB device and locates its bulk endpoints.
+    /// Opens the given USB device, selects the non-iAP configuration, and
+    /// locates its bulk endpoints.
     pub fn open(device_info: &nusb::DeviceInfo) -> Result<Self> {
+        let product_name = device_info.product_string().map(ToOwned::to_owned);
+        let serial_number = device_info.serial_number().map(ToOwned::to_owned);
         let device = device_info.open().wait()?;
 
         // The heat it device exposes two configurations:
@@ -70,9 +73,28 @@ impl UsbBulkTransferDevice {
         // the configuration switch before we start sending commands.
         std::thread::sleep(std::time::Duration::from_millis(100));
 
-        let product_name = device_info.product_string().map(ToOwned::to_owned);
-        let serial_number = device_info.serial_number().map(ToOwned::to_owned);
+        Self::setup_endpoints(device, product_name, serial_number)
+    }
 
+    /// Opens a device from a pre-opened file descriptor.
+    ///
+    /// Intended for Android, where `UsbManager` opens the device and provides
+    /// a file descriptor via `UsbDeviceConnection.getFileDescriptor()`. The OS
+    /// has already selected the correct (non-iAP) configuration, so this path
+    /// skips `SET_CONFIGURATION` and uses whichever configuration is active.
+    #[cfg(any(target_os = "android", target_os = "linux"))]
+    pub fn from_fd(fd: std::os::fd::OwnedFd) -> Result<Self> {
+        let device = nusb::Device::from_fd(fd).wait()?;
+        Self::setup_endpoints(device, None, None)
+    }
+
+    /// Discovers bulk IN/OUT endpoints on the active configuration and claims
+    /// the interface. Shared by both `open` and `from_fd`.
+    fn setup_endpoints(
+        device: nusb::Device,
+        product_name: Option<String>,
+        serial_number: Option<String>,
+    ) -> Result<Self> {
         let config = device.active_configuration()?;
 
         let mut endpoint_out = None;

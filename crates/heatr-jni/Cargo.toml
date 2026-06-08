@@ -1,0 +1,17 @@
+[package]
+name = "heatr-jni"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+name = "heatr_jni"
+
+[dependencies]
+heatr = { path = "../heatr" }
+jni = "0.22.4"
+libc = "0.2"
+log = "0.4"
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.15.1"

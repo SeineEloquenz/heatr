@@ -5,6 +5,8 @@
 //! # Example
 //!
 //! ```no_run
+//! # #[cfg(not(target_os = "android"))]
+//! # {
 //! use heatr::{Api, Preferences};
 //!
 //! let api = Api::new();
@@ -12,29 +14,40 @@
 //!
 //! let prefs = Preferences::default();
 //! api.start(prefs, |_| {}).unwrap();
+//! # }
 //! ```
 
-pub(crate) mod backend;
+pub mod backend;
 pub mod device;
+#[cfg(not(target_os = "android"))]
 pub(crate) mod devices;
 pub mod error;
-pub(crate) mod heat_it;
+pub mod heat_it;
 pub mod prefs;
 pub mod support;
 
 // Re-export the most commonly used types at the crate root.
+pub use backend::{BulkTransferDevice, UsbBulkTransferDevice};
 pub use error::HeatrError;
-pub use heat_it::{HeatingPhase, HeatingStatus};
+pub use heat_it::{HeatItDevice, HeatingPhase, HeatingStatus};
 pub use prefs::{Duration, Generation, Preferences, SkinSensitivity};
 
+// The Api struct and device-discovery logic rely on nusb::list_devices, which
+// is not available on Android (where the OS enumerates USB devices instead).
+#[cfg(not(target_os = "android"))]
 use device::BiteHealerMetadata;
+#[cfg(not(target_os = "android"))]
 use devices::find_bite_healers;
+#[cfg(not(target_os = "android"))]
 use error::Result;
+#[cfg(not(target_os = "android"))]
 use tracing::{info, warn};
 
 /// The primary API entry point.
+#[cfg(not(target_os = "android"))]
 pub struct Api;
 
+#[cfg(not(target_os = "android"))]
 impl Api {
     /// Creates a new `Api` instance.
     pub fn new() -> Self {
@@ -122,6 +135,7 @@ impl Api {
     }
 }
 
+#[cfg(not(target_os = "android"))]
 impl Default for Api {
     fn default() -> Self {
         Self::new()
