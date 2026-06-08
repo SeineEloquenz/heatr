@@ -1,0 +1,31 @@
+name: Update Android SDK Versions
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for Android SDK updates
+        id: update
+        run: python3 .github/scripts/check_android_versions.py
+
+      - name: Create or update pull request
+        if: steps.update.outputs.updated == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update Android SDK versions"
+          branch: update/android-sdk-versions
+          delete-branch: true
+          title: "chore: update Android SDK versions"
+          body: ${{ steps.update.outputs.pr_body }}
