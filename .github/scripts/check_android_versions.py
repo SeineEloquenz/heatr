@@ -52,9 +52,13 @@ def parse_repo(data: bytes):
             continue
 
         if path.startswith("build-tools;"):
-            build_tools.append(path.split(";", 1)[1])
+            v = path.split(";", 1)[1]
+            if all(part.isdigit() for part in v.split(".")):
+                build_tools.append(v)
         elif path.startswith("ndk;"):
-            ndks.append(path.split(";", 1)[1])
+            v = path.split(";", 1)[1]
+            if all(part.isdigit() for part in v.split(".")):
+                ndks.append(v)
         elif re.match(r"^platforms;android-\d+$", path):
             platforms.append(int(path.split("android-")[1]))
 
