@@ -7,6 +7,10 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-ci = {
+      url = "github:SeineEloquenz/nix-ci";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -14,6 +18,7 @@
       self,
       nixpkgs,
       rust-overlay,
+      nix-ci,
     }:
     let
       systems = [
@@ -39,7 +44,6 @@
         {
           default = pkgs.callPackage ./default.nix { };
           udev-rules = pkgs.callPackage ./udev { };
-          check-android-versions = pkgs.callPackage ./.github/scripts/check-android-versions { };
         }
       );
 
@@ -48,6 +52,10 @@
           type = "app";
           program = "${self.packages.${system}.default}/bin/heatr";
         };
+        ci = builtins.mapAttrs (name: pkg: {
+          type = "app";
+          program = "${pkg}/bin/${name}";
+        }) nix-ci.packages.${system};
       });
 
       devShells = forAllSystems (

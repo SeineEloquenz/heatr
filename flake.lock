@@ -1,5 +1,25 @@
 {
   "nodes": {
+    "nix-ci": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1781024879,
+        "narHash": "sha256-8ozTDZHX/vPVc21JuQHrNQcrsR+pFjKqAIhUyp+dcRQ=",
+        "owner": "SeineEloquenz",
+        "repo": "nix-ci",
+        "rev": "b064d60cc5bb9b64a3945d51506930ab38935e8e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "SeineEloquenz",
+        "repo": "nix-ci",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1780749050,
@@ -18,6 +38,7 @@
     },
     "root": {
       "inputs": {
+        "nix-ci": "nix-ci",
         "nixpkgs": "nixpkgs",
         "rust-overlay": "rust-overlay"
       }
