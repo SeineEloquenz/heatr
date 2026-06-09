@@ -7,4 +7,4 @@ on:
 
 jobs:
   nix-ci:
-    uses: SeineEloquenz/nix-ci/.github/workflows/nix-ci.yml@main
+    uses: SeineEloquenz/ci/.github/workflows/nix-ci.yml@main

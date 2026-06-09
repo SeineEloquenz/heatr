@@ -10,6 +10,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: SeineEloquenz/nix-ci/.github/workflows/update-android-sdk.yml@main
+    uses: SeineEloquenz/ci/.github/workflows/update-android-sdk.yml@main
     with:
       nix-file: shell.nix
