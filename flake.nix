@@ -7,10 +7,6 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-ci = {
-      url = "github:SeineEloquenz/nix-ci";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
@@ -18,7 +14,6 @@
       self,
       nixpkgs,
       rust-overlay,
-      nix-ci,
     }:
     let
       systems = [
@@ -52,10 +47,6 @@
           type = "app";
           program = "${self.packages.${system}.default}/bin/heatr";
         };
-      });
-
-      legacyPackages = forAllSystems (system: {
-        ci = nix-ci.packages.${system};
       });
 
       devShells = forAllSystems (
