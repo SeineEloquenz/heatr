@@ -52,10 +52,10 @@
           type = "app";
           program = "${self.packages.${system}.default}/bin/heatr";
         };
-        ci = builtins.mapAttrs (name: pkg: {
-          type = "app";
-          program = "${pkg}/bin/${name}";
-        }) nix-ci.packages.${system};
+      });
+
+      legacyPackages = forAllSystems (system: {
+        ci = nix-ci.packages.${system};
       });
 
       devShells = forAllSystems (
