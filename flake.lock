@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781024879,
-        "narHash": "sha256-8ozTDZHX/vPVc21JuQHrNQcrsR+pFjKqAIhUyp+dcRQ=",
+        "lastModified": 1781025661,
+        "narHash": "sha256-kKm3MjE648aIxu6lPRrovRlY21V5LbyKRKQnJHUalY4=",
         "owner": "SeineEloquenz",
         "repo": "nix-ci",
-        "rev": "b064d60cc5bb9b64a3945d51506930ab38935e8e",
+        "rev": "e5e18d68c77b5a470c8d428d0781c41d68888c8a",
         "type": "github"
       },
       "original": {
