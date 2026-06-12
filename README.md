@@ -46,7 +46,7 @@ use heatr::{Api, Preferences, Duration, Generation, SkinSensitivity};
 
 let api = Api::new();
 
-for healer in api.info()? {
+for healer in api.info().await? {
     println!("{} – {}", healer.product_name(), healer.vendor_name());
 }
 
@@ -54,5 +54,5 @@ api.start(Preferences {
     duration: Duration::Short,
     generation: Generation::Child,
     skin_sensitivity: SkinSensitivity::Sensitive,
-}, |_| {})?;
+}, |_| {}).await?;
 ```

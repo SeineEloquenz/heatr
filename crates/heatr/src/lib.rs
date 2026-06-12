@@ -4,17 +4,20 @@
 //!
 //! # Example
 //!
+//! All device I/O is async and runtime-agnostic: the futures run on any
+//! executor (glib, smol, tokio, or a simple `block_on` such as `pollster`).
+//!
 //! ```no_run
 //! # #[cfg(not(target_os = "android"))]
-//! # {
+//! # pollster::block_on(async {
 //! use heatr::{Api, Preferences};
 //!
 //! let api = Api::new();
-//! api.info().unwrap();
+//! api.info().await.unwrap();
 //!
 //! let prefs = Preferences::default();
-//! api.start(prefs, |_| {}).unwrap();
-//! # }
+//! api.start(prefs, |_| {}).await.unwrap();
+//! # });
 //! ```
 
 pub mod backend;
@@ -41,6 +44,8 @@ use devices::find_bite_healers;
 #[cfg(not(target_os = "android"))]
 use error::Result;
 #[cfg(not(target_os = "android"))]
+use futures_util::StreamExt;
+#[cfg(not(target_os = "android"))]
 use tracing::{info, warn};
 
 /// The primary API entry point.
@@ -55,8 +60,8 @@ impl Api {
     }
 
     /// Shows a list of USB bite healers connected to the host.
-    pub fn info(&self) -> Result<Vec<BiteHealerMetadata>> {
-        let healers = find_bite_healers()?;
+    pub async fn info(&self) -> Result<Vec<BiteHealerMetadata>> {
+        let healers = find_bite_healers().await?;
         if healers.is_empty() {
             info!("No known bite healers detected");
         } else {
@@ -74,10 +79,10 @@ impl Api {
     /// Must be called once after connecting the device before the first
     /// `start`. Subsequent `start` calls on the same device session do not
     /// need to re-run init.
-    pub fn init(&self) -> Result<()> {
+    pub async fn init(&self) -> Result<()> {
         info!("Searching for bite healer…");
 
-        let candidates = find_bite_healers()?;
+        let candidates = find_bite_healers().await?;
         if candidates.is_empty() {
             return Err(HeatrError::NoBiteHealerConnected);
         }
@@ -93,8 +98,8 @@ impl Api {
             candidate.vendor_name()
         );
 
-        let mut healer = candidate.connect()?;
-        healer.self_test()?;
+        let mut healer = candidate.connect().await?;
+        healer.self_test().await?;
         info!("Bite healer ready.");
         Ok(())
     }
@@ -103,7 +108,7 @@ impl Api {
     ///
     /// Assumes `init` has already been called for this device session.
     /// `on_progress` is called after every status poll during heating.
-    pub fn start<F>(&self, preferences: Preferences, on_progress: F) -> Result<()>
+    pub async fn start<F>(&self, preferences: Preferences, mut on_progress: F) -> Result<()>
     where
         F: FnMut(&HeatingStatus),
     {
@@ -111,7 +116,7 @@ impl Api {
         warn!("The app is NOT SAFE to use for treating insect bites.");
         info!("Searching for bite healer…");
 
-        let candidates = find_bite_healers()?;
+        let candidates = find_bite_healers().await?;
         if candidates.is_empty() {
             return Err(HeatrError::NoBiteHealerConnected);
         }
@@ -128,9 +133,16 @@ impl Api {
         );
         info!("Using settings: {}", preferences);
 
-        let mut healer = candidate.connect()?;
-        healer.start_with_preferences(&preferences)?;
-        healer.monitor(on_progress)?;
+        let mut healer = candidate.connect().await?;
+        healer.start_with_preferences(&preferences).await?;
+        {
+            let stream = healer.monitor();
+            futures_util::pin_mut!(stream);
+            while let Some(status) = stream.next().await {
+                on_progress(&status?);
+            }
+        }
+        healer.stop_heating().await?;
         Ok(())
     }
 }

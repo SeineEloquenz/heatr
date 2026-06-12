@@ -1,8 +1,8 @@
 //! Heatr command-line interface.
 
 use clap::{Parser, Subcommand, ValueEnum};
-use indicatif::{ProgressBar, ProgressStyle};
 use heatr::{Api, Duration, Generation, HeatingPhase, HeatingStatus, Preferences, SkinSensitivity};
+use indicatif::{ProgressBar, ProgressStyle};
 use std::time::Duration as StdDuration;
 
 #[derive(Parser)]
@@ -100,9 +100,10 @@ fn main() {
     let cli = Cli::parse();
     let api = Api::new();
 
+    // The heatr library is async; the CLI simply blocks on each operation.
     let result = match cli.command {
-        Commands::Init => api.init(),
-        Commands::Info => api.info().map(|healers| {
+        Commands::Init => pollster::block_on(api.init()),
+        Commands::Info => pollster::block_on(api.info()).map(|healers| {
             if healers.is_empty() {
                 println!("No known bite healers detected.");
             } else {
@@ -146,7 +147,7 @@ fn main() {
             pb.enable_steady_tick(StdDuration::from_millis(80));
             pb.set_message("Heating…");
             let mut heated = false;
-            let result = api.start(preferences, |status: &HeatingStatus| {
+            let result = pollster::block_on(api.start(preferences, |status: &HeatingStatus| {
                 if status.phase == HeatingPhase::Heating {
                     pb.set_message(format!("Heating    temp {:3}/225", status.temperature));
                 } else {
@@ -156,7 +157,7 @@ fn main() {
                     }
                     pb.set_message(format!("Applying   temp {:3}/225", status.temperature));
                 }
-            });
+            }));
             match result {
                 Ok(()) => {
                     pb.finish_with_message("Treatment complete.");

@@ -35,8 +35,8 @@ impl BiteHealerMetadata {
     }
 
     /// Opens a connection to this device and returns a ready `HeatItDevice`.
-    pub fn connect(&self) -> Result<HeatItDevice> {
-        let backend = UsbBulkTransferDevice::open(&self.usb_device)?;
+    pub async fn connect(&self) -> Result<HeatItDevice> {
+        let backend = UsbBulkTransferDevice::open(&self.usb_device).await?;
         Ok(HeatItDevice::new(Box::new(backend)))
     }
 }

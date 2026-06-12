@@ -1,9 +1,12 @@
 //! USB bulk-transfer backend abstraction.
 
+use async_trait::async_trait;
+use futures_timer::Delay;
+use futures_util::future::{Either, select};
+use futures_util::pin_mut;
 use nusb::{
-    MaybeFuture,
     descriptors::TransferType,
-    transfer::{Buffer, Direction},
+    transfer::{Buffer, BulkOrInterrupt, Completion, Direction, EndpointDirection},
 };
 use tracing::debug;
 
@@ -16,15 +19,45 @@ const TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
 ///
 /// This abstraction exists so that the higher-level `HeatItDevice` can be
 /// tested without a real USB device (by providing a mock implementation).
+#[async_trait]
 pub trait BulkTransferDevice: Send {
     /// Sends `request` via USB bulk transfer and returns the device response.
-    fn bulk_transfer(&mut self, request: &[u8]) -> Result<Vec<u8>>;
+    async fn bulk_transfer(&mut self, request: &[u8]) -> Result<Vec<u8>>;
 
     /// Human-readable product name reported by the USB device.
     fn product_name(&self) -> Option<String>;
 
     /// Serial number reported by the USB device.
     fn serial_number(&self) -> Option<String>;
+}
+
+/// Submits `buf` on `ep` and waits for the transfer to complete, cancelling
+/// it if it does not complete within `timeout`.
+///
+/// Mirrors `Endpoint::transfer_blocking`: on timeout the transfer is
+/// cancelled and the returned `Completion` has a status of
+/// `TransferError::Cancelled`.
+async fn transfer_with_timeout<EpType, Dir>(
+    ep: &mut nusb::Endpoint<EpType, Dir>,
+    buf: Buffer,
+    timeout: std::time::Duration,
+) -> Completion
+where
+    EpType: BulkOrInterrupt,
+    Dir: EndpointDirection,
+{
+    ep.submit(buf);
+    {
+        let completion = ep.next_complete();
+        pin_mut!(completion);
+        if let Either::Left((completion, _)) = select(completion, Delay::new(timeout)).await {
+            return completion;
+        }
+    }
+    // Timed out: request cancellation. The cancelled transfer is still
+    // returned through next_complete.
+    ep.cancel_all();
+    ep.next_complete().await
 }
 
 /// A real USB bulk-transfer device backed by nusb.
@@ -38,10 +71,10 @@ pub struct UsbBulkTransferDevice {
 impl UsbBulkTransferDevice {
     /// Opens the given USB device, selects the non-iAP configuration, and
     /// locates its bulk endpoints.
-    pub fn open(device_info: &nusb::DeviceInfo) -> Result<Self> {
+    pub async fn open(device_info: &nusb::DeviceInfo) -> Result<Self> {
         let product_name = device_info.product_string().map(ToOwned::to_owned);
         let serial_number = device_info.serial_number().map(ToOwned::to_owned);
-        let device = device_info.open().wait()?;
+        let device = device_info.open().await?;
 
         // The heat it device exposes two configurations:
         //   1 = iAP (Apple Accessory Protocol, subclass 0xF0) — selected by
@@ -67,13 +100,13 @@ impl UsbBulkTransferDevice {
 
         // SET_CONFIGURATION resets all endpoint toggle bits, clears stall/halt
         // state, and switches to the standard USB config.
-        device.set_configuration(config_value).wait()?;
+        device.set_configuration(config_value).await?;
 
         // Give the device firmware time to reinitialize its USB stack after
         // the configuration switch before we start sending commands.
-        std::thread::sleep(std::time::Duration::from_millis(100));
+        Delay::new(std::time::Duration::from_millis(100)).await;
 
-        Self::setup_endpoints(device, product_name, serial_number)
+        Self::setup_endpoints(device, product_name, serial_number).await
     }
 
     /// Opens a device from a pre-opened file descriptor.
@@ -83,14 +116,14 @@ impl UsbBulkTransferDevice {
     /// has already selected the correct (non-iAP) configuration, so this path
     /// skips `SET_CONFIGURATION` and uses whichever configuration is active.
     #[cfg(any(target_os = "android", target_os = "linux"))]
-    pub fn from_fd(fd: std::os::fd::OwnedFd) -> Result<Self> {
-        let device = nusb::Device::from_fd(fd).wait()?;
-        Self::setup_endpoints(device, None, None)
+    pub async fn from_fd(fd: std::os::fd::OwnedFd) -> Result<Self> {
+        let device = nusb::Device::from_fd(fd).await?;
+        Self::setup_endpoints(device, None, None).await
     }
 
     /// Discovers bulk IN/OUT endpoints on the active configuration and claims
     /// the interface. Shared by both `open` and `from_fd`.
-    fn setup_endpoints(
+    async fn setup_endpoints(
         device: nusb::Device,
         product_name: Option<String>,
         serial_number: Option<String>,
@@ -136,7 +169,7 @@ impl UsbBulkTransferDevice {
             HeatrError::EndpointNotFound("No interface with bulk IN/OUT endpoints found".into())
         })?;
 
-        let interface = device.detach_and_claim_interface(interface_number).wait()?;
+        let interface = device.detach_and_claim_interface(interface_number).await?;
 
         let ep_out =
             interface.endpoint::<nusb::transfer::Bulk, nusb::transfer::Out>(endpoint_out)?;
@@ -152,15 +185,15 @@ impl UsbBulkTransferDevice {
     }
 }
 
+#[async_trait]
 impl BulkTransferDevice for UsbBulkTransferDevice {
-    fn bulk_transfer(&mut self, request: &[u8]) -> Result<Vec<u8>> {
-        self.ep_out
-            .transfer_blocking(request.to_vec().into(), TIMEOUT)
+    async fn bulk_transfer(&mut self, request: &[u8]) -> Result<Vec<u8>> {
+        transfer_with_timeout(&mut self.ep_out, request.to_vec().into(), TIMEOUT)
+            .await
             .status?;
 
-        let response = self
-            .ep_in
-            .transfer_blocking(Buffer::new(REPLY_BUFFER_SIZE), TIMEOUT);
+        let response =
+            transfer_with_timeout(&mut self.ep_in, Buffer::new(REPLY_BUFFER_SIZE), TIMEOUT).await;
         response.status?;
 
         let buf = response.buffer.into_vec();

@@ -137,8 +137,6 @@ pub static SUPPORT_STATEMENTS: &[SupportStatement] = &[
         vendor_name: "Kamedi GmbH",
         product_name: "heat it",
         supported: false,
-        comment: Some(
-            "heatr is not compatible with this newer model yet. Please open an issue.",
-        ),
+        comment: Some("heatr is not compatible with this newer model yet. Please open an issue."),
     },
 ];
