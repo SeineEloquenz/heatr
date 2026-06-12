@@ -1,8 +1,8 @@
-//! Heatr GTK4/libadwaita client.
-//!
-//! A GNOME desktop client for the heatr library. All device I/O runs as
-//! async tasks on the GLib main loop; no worker threads are needed.
+//! GNOME Heatr app.
 
+mod device;
+#[cfg(feature = "mock-device")]
+mod mock;
 mod window;
 
 use adw::prelude::*;
@@ -48,7 +48,7 @@ fn show_about(app: &adw::Application) {
         .application_icon(APP_ID)
         .version(env!("CARGO_PKG_VERSION"))
         .comments(
-            "Client for insect bite healers like heat-it.\n\nNOT A CERTIFIED MEDICAL PRODUCT. WE ARE NOT LIABLE FOR ANY DAMAGE YOU DO TO YOURSELF",
+            "App for insect bite healers like heat-it.\n\nNOT A CERTIFIED MEDICAL PRODUCT. WE ARE NOT LIABLE FOR ANY DAMAGE YOU DO TO YOURSELF",
         )
         .build();
     dialog.present(app.active_window().as_ref());
