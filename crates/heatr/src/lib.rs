@@ -74,12 +74,13 @@ impl Api {
         Ok(healers)
     }
 
-    /// Runs the initialization sequence on a connected bite healer.
+    /// Connects to the first supported bite healer and returns the device
+    /// session.
     ///
-    /// Must be called once after connecting the device before the first
-    /// `start`. Subsequent `start` calls on the same device session do not
-    /// need to re-run init.
-    pub async fn init(&self) -> Result<()> {
+    /// The returned [`HeatItDevice`] can be used directly for `self_test`
+    /// followed by one or more start/monitor/stop cycles, without
+    /// re-discovering the device in between.
+    pub async fn connect(&self) -> Result<HeatItDevice> {
         info!("Searching for bite healer…");
 
         let candidates = find_bite_healers().await?;
@@ -93,12 +94,21 @@ impl Api {
             .ok_or(HeatrError::UnsupportedBiteHealer)?;
 
         info!(
-            "Initializing: {} ({})",
+            "Connecting to bite healer: {} ({})",
             candidate.product_name(),
             candidate.vendor_name()
         );
 
-        let mut healer = candidate.connect().await?;
+        candidate.connect().await
+    }
+
+    /// Runs the initialization sequence on a connected bite healer.
+    ///
+    /// Must be called once after connecting the device before the first
+    /// `start`. Subsequent `start` calls on the same device session do not
+    /// need to re-run init.
+    pub async fn init(&self) -> Result<()> {
+        let mut healer = self.connect().await?;
         healer.self_test().await?;
         info!("Bite healer ready.");
         Ok(())
@@ -114,26 +124,10 @@ impl Api {
     {
         warn!("This app is only a tech demo and NOT for medical use.");
         warn!("The app is NOT SAFE to use for treating insect bites.");
-        info!("Searching for bite healer…");
 
-        let candidates = find_bite_healers().await?;
-        if candidates.is_empty() {
-            return Err(HeatrError::NoBiteHealerConnected);
-        }
-
-        let candidate = candidates
-            .into_iter()
-            .find(|c| c.support_statement.supported)
-            .ok_or(HeatrError::UnsupportedBiteHealer)?;
-
-        info!(
-            "Using bite healer: {} ({})",
-            candidate.product_name(),
-            candidate.vendor_name()
-        );
+        let mut healer = self.connect().await?;
         info!("Using settings: {}", preferences);
 
-        let mut healer = candidate.connect().await?;
         healer.start_with_preferences(&preferences).await?;
         {
             let stream = healer.monitor();
