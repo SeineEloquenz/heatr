@@ -37,8 +37,10 @@
           pkgs = import nixpkgs { inherit system; };
         in
         {
-          default = pkgs.callPackage ./default.nix { };
-          udev-rules = pkgs.callPackage ./udev { };
+          default = pkgs.callPackage ./nix/cli.nix { };
+          cli = pkgs.callPackage ./nix/cli.nix { };
+          gtk = pkgs.callPackage ./nix/gtk.nix { };
+          udev-rules = pkgs.callPackage ./nix/udev { };
         }
       );
 
