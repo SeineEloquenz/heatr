@@ -52,6 +52,12 @@ in
       pkgs.cargo-ndk
       pkgs.gradle
       androidSdk.androidsdk
+
+      # GTK4/libadwaita client
+      pkgs.pkg-config
+      pkgs.glib
+      pkgs.gtk4
+      pkgs.libadwaita
     ];
 
     env = {
