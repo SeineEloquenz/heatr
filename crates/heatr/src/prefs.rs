@@ -145,6 +145,10 @@ pub struct Preferences {
 
 impl fmt::Display for Preferences {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}, {}, {}", self.duration, self.generation, self.skin_sensitivity)
+        write!(
+            f,
+            "{}, {}, {}",
+            self.duration, self.generation, self.skin_sensitivity
+        )
     }
 }

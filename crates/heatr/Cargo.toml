@@ -4,6 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-nusb = "0.2.3"
+async-trait = "0.1"
+futures-timer = "3"
+futures-util = { version = "0.3", default-features = false, features = ["std", "async-await"] }
+# The "smol" feature does not pull in the smol runtime; it only enables the
+# runtime-agnostic `blocking` thread pool so that nusb's blocking syscalls
+# (open, set_configuration, claim_interface, list_devices) can be awaited.
+nusb = { version = "0.2.3", features = ["smol"] }
 thiserror = "2.0.18"
 tracing = "0.1.44"
+
+[dev-dependencies]
+pollster = "0.4"

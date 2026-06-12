@@ -1,5 +1,6 @@
 use std::os::fd::{FromRawFd, OwnedFd};
 
+use futures_util::{StreamExt, pin_mut};
 use heatr::{
     HeatItDevice, UsbBulkTransferDevice,
     heat_it::HeatingPhase,
@@ -70,7 +71,9 @@ pub extern "system" fn Java_nz_eloque_heatr_native_HeatrJni_openDevice<'local>(
                 return Err(NativeError("dup(fd) failed".to_owned()));
             }
             let owned = unsafe { OwnedFd::from_raw_fd(dup) };
-            let backend = UsbBulkTransferDevice::from_fd(owned)?;
+            // The heatr library is async; JNI entry points are called from
+            // Kotlin background dispatchers, so blocking here is fine.
+            let backend = pollster::block_on(UsbBulkTransferDevice::from_fd(owned))?;
             Ok(Box::into_raw(Box::new(HeatItDevice::new(Box::new(backend)))) as jlong)
         })
         .resolve::<ThrowRuntimeExAndDefault>()
@@ -102,7 +105,7 @@ pub extern "system" fn Java_nz_eloque_heatr_native_HeatrJni_runInit<'local>(
                 return Err(NativeError("null device handle".to_owned()));
             }
             let device = unsafe { &mut *(handle as *mut HeatItDevice) };
-            device.self_test()?;
+            pollster::block_on(device.self_test())?;
             Ok(())
         })
         .resolve::<ThrowRuntimeExAndDefault>()
@@ -146,28 +149,45 @@ pub extern "system" fn Java_nz_eloque_heatr_native_HeatrJni_startHeating<'local>
             };
             let device = unsafe { &mut *(handle as *mut HeatItDevice) };
 
-            device.start_with_preferences(&prefs)?;
-
             let jvm = env.get_java_vm()?;
             let callback_ref = env.new_global_ref(&callback)?;
 
-            device.monitor(|status| {
-                let phase: i32 = match status.phase {
-                    HeatingPhase::Heating => 0,
-                    HeatingPhase::Applying => 1,
-                    HeatingPhase::Done => 2,
-                };
-                if let Err(e) = jvm.attach_current_thread(|env| -> Result<(), jni::errors::Error> {
-                    env.call_method(
-                        callback_ref.as_obj(),
-                        jni_str!("onProgress"),
-                        jni_sig!("(II)V"),
-                        &[JValue::Int(phase), JValue::Int(status.temperature as i32)],
-                    )?;
-                    Ok(())
-                }) {
-                    log::error!("JNI progress callback failed: {e}");
+            // The heatr library is async; this entry point is called from a
+            // Kotlin background dispatcher, so blocking on the whole heating
+            // cycle is fine (and matches the documented contract).
+            pollster::block_on(async {
+                device.start_with_preferences(&prefs).await?;
+
+                {
+                    let stream = device.monitor();
+                    pin_mut!(stream);
+                    while let Some(status) = stream.next().await {
+                        let status = status?;
+                        let phase: i32 = match status.phase {
+                            HeatingPhase::Heating => 0,
+                            HeatingPhase::Applying => 1,
+                            HeatingPhase::Done => 2,
+                        };
+                        if let Err(e) =
+                            jvm.attach_current_thread(|env| -> Result<(), jni::errors::Error> {
+                                env.call_method(
+                                    callback_ref.as_obj(),
+                                    jni_str!("onProgress"),
+                                    jni_sig!("(II)V"),
+                                    &[JValue::Int(phase), JValue::Int(status.temperature as i32)],
+                                )?;
+                                Ok(())
+                            })
+                        {
+                            log::error!("JNI progress callback failed: {e}");
+                        }
+                    }
                 }
+
+                // The monitor stream no longer auto-stops the device once the
+                // cycle ends; send STOP_HEATING explicitly.
+                device.stop_heating().await?;
+                Ok::<(), NativeError>(())
             })?;
 
             Ok(())

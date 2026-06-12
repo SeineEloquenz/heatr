@@ -1,6 +1,6 @@
 //! Device discovery: enumerate USB devices and match against known VID/PIDs.
 
-use nusb::{MaybeFuture, list_devices};
+use nusb::list_devices;
 use tracing::debug;
 
 use crate::device::BiteHealerMetadata;
@@ -9,10 +9,10 @@ use crate::support::{SUPPORT_STATEMENTS, VidPid};
 
 /// Finds all bite healers (supported and unsupported) that are currently
 /// connected to this host.
-pub fn find_bite_healers() -> Result<Vec<BiteHealerMetadata>> {
+pub async fn find_bite_healers() -> Result<Vec<BiteHealerMetadata>> {
     let mut results = Vec::new();
 
-    for device in list_devices().wait()? {
+    for device in list_devices().await? {
         let vid_pid = VidPid {
             vid: device.vendor_id(),
             pid: device.product_id(),
