@@ -1,12 +1,12 @@
-//! Main application window: a three-state stack (no device / ready / running).
+//! Main application window
 
 use std::rc::Rc;
 
 use adw::prelude::*;
 use gtk::{gio, glib};
-use heatr::Api;
-use heatr::device::BiteHealerMetadata;
 use tracing::error;
+
+use crate::device::{self, DeviceView};
 
 const PAGE_NO_DEVICE: &str = "no-device";
 const PAGE_READY: &str = "ready";
@@ -40,27 +40,8 @@ pub fn build(app: &adw::Application) -> adw::ApplicationWindow {
     ui.window.clone()
 }
 
-/// Display info for a detected bite healer.
-struct DeviceView {
-    product: String,
-    vendor: String,
-    serial: Option<String>,
-    supported: bool,
-}
-
-impl From<&BiteHealerMetadata> for DeviceView {
-    fn from(meta: &BiteHealerMetadata) -> Self {
-        Self {
-            product: meta.product_name().to_owned(),
-            vendor: meta.vendor_name().to_owned(),
-            serial: meta.serial_number.clone(),
-            supported: meta.supported(),
-        }
-    }
-}
-
 /// All widgets that change with application state.
-#[allow(dead_code)] // Session-control fields are wired up in the next phase.
+#[expect(dead_code)]
 struct Ui {
     window: adw::ApplicationWindow,
     toast_overlay: adw::ToastOverlay,
@@ -186,21 +167,9 @@ impl Ui {
     fn refresh(self: &Rc<Self>) {
         let ui = Rc::clone(self);
         glib::spawn_future_local(async move {
-            match Api::new().info().await {
-                Ok(healers) => {
-                    // Prefer a supported device; fall back to showing the
-                    // first unsupported one so the user learns why it won't
-                    // work.
-                    let device = healers
-                        .iter()
-                        .find(|h| h.supported())
-                        .or_else(|| healers.first())
-                        .map(DeviceView::from);
-                    match device {
-                        Some(device) => ui.show_ready(&device),
-                        None => ui.show_no_device(),
-                    }
-                }
+            match device::discover().await {
+                Ok(Some(found)) => ui.show_ready(&found),
+                Ok(None) => ui.show_no_device(),
                 Err(e) => {
                     error!("Device discovery failed: {e}");
                     ui.toast(&format!("Device discovery failed: {e}"));
@@ -231,7 +200,7 @@ impl Ui {
         self.stack.set_visible_child_name(PAGE_READY);
     }
 
-    #[allow(dead_code)] // Used once session control lands.
+    #[expect(dead_code)]
     fn show_running(&self) {
         self.banner.set_revealed(true);
         self.stack.set_visible_child_name(PAGE_RUNNING);

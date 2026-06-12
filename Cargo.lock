@@ -717,6 +717,8 @@ dependencies = [
 name = "heatr-gtk"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "futures-timer",
  "gtk4",
  "heatr",
  "libadwaita",

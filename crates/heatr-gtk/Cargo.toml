@@ -9,7 +9,13 @@ path = "src/main.rs"
 
 [dependencies]
 adw = { package = "libadwaita", version = "0.9.1", features = ["v1_5"] }
+async-trait = { version = "0.1", optional = true }
+futures-timer = { version = "3", optional = true }
 gtk = { package = "gtk4", version = "0.11.3", features = ["v4_10"] }
 heatr = { path = "../heatr" }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+
+[features]
+#   cargo run -p heatr-gtk --features mock-device
+mock-device = ["dep:async-trait", "dep:futures-timer"]
