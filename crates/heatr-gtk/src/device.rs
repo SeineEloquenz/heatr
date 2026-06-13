@@ -42,7 +42,6 @@ mod imp {
     }
 
     /// Connects to the first supported bite healer.
-    #[expect(dead_code)]
     pub async fn connect() -> Result<HeatItDevice> {
         Api::new().connect().await
     }
@@ -64,11 +63,9 @@ mod imp {
     }
 
     /// Connects to the simulated device.
-    #[expect(dead_code)]
     pub async fn connect() -> Result<HeatItDevice> {
         Ok(HeatItDevice::new(Box::new(MockBulkTransferDevice::new())))
     }
 }
 
-#[expect(unused_imports)]
 pub use imp::{connect, discover};

@@ -1,12 +1,15 @@
 //! Main application window
 
+use std::cell::Cell;
 use std::rc::Rc;
 
 use adw::prelude::*;
 use gtk::{gio, glib};
+use heatr::{Duration, Generation, HeatingPhase, HeatingStatus, Preferences, SkinSensitivity};
 use tracing::error;
 
 use crate::device::{self, DeviceView};
+use crate::session::{self, Outcome};
 
 const PAGE_NO_DEVICE: &str = "no-device";
 const PAGE_READY: &str = "ready";
@@ -29,11 +32,11 @@ pub fn build(app: &adw::Application) -> adw::ApplicationWindow {
 
     ui.start_button.connect_clicked({
         let ui = Rc::clone(&ui);
-        move |_| ui.toast("Session control is not implemented yet")
+        move |_| ui.start_session()
     });
     ui.stop_button.connect_clicked({
         let ui = Rc::clone(&ui);
-        move |_| ui.toast("Session control is not implemented yet")
+        move |_| ui.request_stop()
     });
 
     ui.refresh();
@@ -41,7 +44,6 @@ pub fn build(app: &adw::Application) -> adw::ApplicationWindow {
 }
 
 /// All widgets that change with application state.
-#[expect(dead_code)]
 struct Ui {
     window: adw::ApplicationWindow,
     toast_overlay: adw::ToastOverlay,
@@ -55,6 +57,10 @@ struct Ui {
     phase_label: gtk::Label,
     temperature_bar: gtk::LevelBar,
     stop_button: gtk::Button,
+    /// True while a session task is in flight (re-entrancy guard).
+    running: Cell<bool>,
+    /// Shared with the running session task; set to request cancellation.
+    stop: Rc<Cell<bool>>,
 }
 
 impl Ui {
@@ -160,11 +166,17 @@ impl Ui {
             phase_label,
             temperature_bar,
             stop_button,
+            running: Cell::new(false),
+            stop: Rc::new(Cell::new(false)),
         }
     }
 
     /// Scans for bite healers and switches to the matching page.
     fn refresh(self: &Rc<Self>) {
+        // Don't yank the page out from under a running session.
+        if self.running.get() {
+            return;
+        }
         let ui = Rc::clone(self);
         glib::spawn_future_local(async move {
             match device::discover().await {
@@ -200,10 +212,88 @@ impl Ui {
         self.stack.set_visible_child_name(PAGE_READY);
     }
 
-    #[expect(dead_code)]
+    /// Reads the session preferences from the input rows.
+    fn read_preferences(&self) -> Preferences {
+        let duration = match self.duration_row.selected() {
+            0 => Duration::Short,
+            1 => Duration::Medium,
+            _ => Duration::Long,
+        };
+        let generation = match self.user_row.selected() {
+            0 => Generation::Child,
+            _ => Generation::Adult,
+        };
+        let skin_sensitivity = if self.sensitive_row.is_active() {
+            SkinSensitivity::Sensitive
+        } else {
+            SkinSensitivity::Regular
+        };
+        Preferences {
+            duration,
+            generation,
+            skin_sensitivity,
+        }
+    }
+
+    /// Starts a heating session and switches to the running page.
+    fn start_session(self: &Rc<Self>) {
+        if self.running.get() {
+            return;
+        }
+        self.running.set(true);
+        self.stop.set(false);
+
+        let prefs = self.read_preferences();
+        self.show_running();
+
+        let ui = Rc::clone(self);
+        let stop = Rc::clone(&self.stop);
+        glib::spawn_future_local(async move {
+            let outcome = session::run(prefs, stop, |status| ui.update_progress(status)).await;
+            ui.finish_session(outcome);
+        });
+    }
+
+    /// Requests cancellation of the running session.
+    fn request_stop(&self) {
+        self.stop.set(true);
+        self.stop_button.set_sensitive(false);
+        self.phase_label.set_label("Stopping…");
+    }
+
+    /// Switches to the running page and resets its widgets.
     fn show_running(&self) {
+        self.phase_label.set_label("Preheating…");
+        self.temperature_bar.set_value(0.0);
+        self.stop_button.set_sensitive(true);
         self.banner.set_revealed(true);
         self.stack.set_visible_child_name(PAGE_RUNNING);
+    }
+
+    /// Reflects a status poll on the running page.
+    fn update_progress(&self, status: &HeatingStatus) {
+        let label = match status.phase {
+            HeatingPhase::Heating => "Preheating…",
+            HeatingPhase::Applying => "Apply to skin",
+            HeatingPhase::Done => "Done",
+        };
+        self.phase_label.set_label(label);
+        self.temperature_bar.set_value(status.temperature as f64);
+    }
+
+    /// Reports the session outcome and returns to device selection.
+    fn finish_session(self: &Rc<Self>, outcome: Outcome) {
+        self.running.set(false);
+        match outcome {
+            Outcome::Completed => self.toast("Session complete"),
+            Outcome::Stopped => self.toast("Session stopped"),
+            Outcome::Failed(message) => {
+                error!("Session failed: {message}");
+                self.toast(&message);
+            }
+        }
+        // Re-scan so the page reflects whether the device is still present.
+        self.refresh();
     }
 
     fn toast(&self, message: &str) {

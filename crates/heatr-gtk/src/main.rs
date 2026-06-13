@@ -3,6 +3,7 @@
 mod device;
 #[cfg(feature = "mock-device")]
 mod mock;
+mod session;
 mod window;
 
 use adw::prelude::*;
