@@ -58,6 +58,15 @@ rustPlatform.buildRustPackage {
     lockFile = ../Cargo.lock;
   };
 
+  postInstall = ''
+    install -Dm644 crates/heatr-gtk/data/nz.eloque.heatr.desktop \
+      $out/share/applications/nz.eloque.heatr.desktop
+    install -Dm644 crates/heatr-gtk/data/nz.eloque.heatr.metainfo.xml \
+      $out/share/metainfo/nz.eloque.heatr.metainfo.xml
+    install -Dm644 crates/heatr-gtk/data/icons/hicolor/scalable/apps/nz.eloque.heatr.svg \
+      $out/share/icons/hicolor/scalable/apps/nz.eloque.heatr.svg
+  '';
+
   meta = {
     description = "GTK4 client for heat-based USB insect bite healers";
     license = lib.licenses.gpl3Plus;

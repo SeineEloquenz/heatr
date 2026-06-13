@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>nz.eloque.heatr</id>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Heatr</name>
+  <summary>Control heat-based USB insect bite healers</summary>
+
+  <developer id="nz.eloque">
+    <name>Alexander Linder</name>
+  </developer>
+
+  <description>
+    <p>
+      Heatr is a free and open source app for interfacing with heat-based USB
+      insect bite healers such as the heat it by Kamedi GmbH. Plug in a
+      supported device, choose your settings, and run a heating session.
+    </p>
+    <p>
+      Warning: Heatr is NOT a certified medical product. It is not prove safe
+      for use on human skin and the authors are not liable for any damage
+      you do to yourself using it.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">nz.eloque.heatr.desktop</launchable>
+
+  <categories>
+    <category>Utility</category>
+  </categories>
+
+  <keywords>
+    <keyword>bite</keyword>
+    <keyword>healer</keyword>
+    <keyword>insect</keyword>
+    <keyword>mosquito</keyword>
+    <keyword>USB</keyword>
+  </keywords>
+
+  <url type="homepage">https://github.com/SeineEloquenz/heatr</url>
+  <url type="bugtracker">https://github.com/SeineEloquenz/heatr/issues</url>
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="0.1.0" date="2026-06-13">
+      <description>
+        <p>Initial GTK4 / libadwaita client.</p>
+      </description>
+    </release>
+  </releases>
+</component>

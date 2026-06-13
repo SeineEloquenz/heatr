@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Heatr
+GenericName=Bite Healer
+Comment=Control heat-based USB insect bite healers
+Icon=nz.eloque.heatr
+Exec=heatr-gtk
+Terminal=false
+Categories=Utility;GTK;
+Keywords=bite;healer;heat;insect;mosquito;sting;USB;
+StartupNotify=true
