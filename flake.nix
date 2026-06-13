@@ -58,10 +58,6 @@
         }
       );
 
-      nixosModules.default =
-        { pkgs, ... }:
-        {
-          services.udev.packages = [ self.packages.${pkgs.system}.udev-rules ];
-        };
+      nixosModules.default = import ./nix/nixos-module.nix { inherit self; };
     };
 }
