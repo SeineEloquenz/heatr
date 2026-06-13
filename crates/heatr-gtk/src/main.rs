@@ -4,12 +4,13 @@ mod device;
 #[cfg(feature = "mock-device")]
 mod mock;
 mod session;
+mod settings;
 mod window;
 
 use adw::prelude::*;
 use gtk::{gio, glib};
 
-const APP_ID: &str = "nz.eloque.heatr";
+pub(crate) const APP_ID: &str = "nz.eloque.heatr";
 
 fn main() -> glib::ExitCode {
     tracing_subscriber::fmt()

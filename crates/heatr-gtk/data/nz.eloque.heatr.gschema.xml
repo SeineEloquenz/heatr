@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="nz.eloque.heatr" path="/nz/eloque/heatr/">
+    <key name="consent-accepted" type="b">
+      <default>false</default>
+      <summary>Safety notice accepted</summary>
+      <description>
+        Whether the user has acknowledged that Heatr is not a certified
+        medical product.
+      </description>
+    </key>
+    <key name="duration" type="u">
+      <range min="0" max="2"/>
+      <default>0</default>
+      <summary>Session duration</summary>
+      <description>Treatment duration: 0 = short, 1 = medium, 2 = long.</description>
+    </key>
+    <key name="user" type="u">
+      <range min="0" max="1"/>
+      <default>0</default>
+      <summary>User cohort</summary>
+      <description>Target user: 0 = child, 1 = adult.</description>
+    </key>
+    <key name="sensitive-skin" type="b">
+      <default>true</default>
+      <summary>Sensitive skin</summary>
+      <description>Whether to use the gentler sensitive-skin setting.</description>
+    </key>
+  </schema>
+</schemalist>

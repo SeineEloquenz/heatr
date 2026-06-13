@@ -122,8 +122,7 @@ impl Api {
     where
         F: FnMut(&HeatingStatus),
     {
-        warn!("This app is only a tech demo and NOT for medical use.");
-        warn!("The app is NOT SAFE to use for treating insect bites.");
+        warn!("This app is NOT a certified medical product.");
 
         let mut healer = self.connect().await?;
         info!("Using settings: {}", preferences);

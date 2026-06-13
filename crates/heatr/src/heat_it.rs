@@ -23,7 +23,7 @@
 use futures_timer::Delay;
 use futures_util::Stream;
 use futures_util::stream;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 use crate::backend::BulkTransferDevice;
 use crate::error::{HeatrError, Result};
@@ -263,8 +263,7 @@ impl HeatItDevice {
         info!("Device now preheating.");
         info!("Watch the LED closely.");
         info!("It will blink purple, then stop and light up blue.");
-        warn!("While using this app, your bite healer is NOT SAFE for use on human skin.");
-        info!("Once the LED turns green, the tech demo has completed.");
+        info!("Once the LED turns green, the process has completed.");
         Ok(())
     }
 

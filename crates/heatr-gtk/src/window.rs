@@ -39,7 +39,12 @@ pub fn build(app: &adw::Application) -> adw::ApplicationWindow {
         move |_| ui.request_stop()
     });
 
-    ui.refresh();
+    // Gate first use behind the safety acknowledgement.
+    if ui.consent_accepted() {
+        ui.refresh();
+    } else {
+        ui.present_consent();
+    }
     ui.window.clone()
 }
 
@@ -61,10 +66,14 @@ struct Ui {
     running: Cell<bool>,
     /// Shared with the running session task; set to request cancellation.
     stop: Rc<Cell<bool>>,
+    /// Persisted preferences and consent, or `None` if the schema is missing.
+    settings: Option<gio::Settings>,
 }
 
 impl Ui {
     fn new(app: &adw::Application) -> Self {
+        let settings = crate::settings::load();
+
         // -- Header bar --------------------------------------------------
         let header = adw::HeaderBar::new();
 
@@ -103,6 +112,14 @@ impl Ui {
             .title("Sensitive Skin")
             .active(true)
             .build();
+
+        if let Some(settings) = &settings {
+            settings.bind("duration", &duration_row, "selected").build();
+            settings.bind("user", &user_row, "selected").build();
+            settings
+                .bind("sensitive-skin", &sensitive_row, "active")
+                .build();
+        }
         let start_button = gtk::Button::builder()
             .label("Start")
             .halign(gtk::Align::Center)
@@ -168,6 +185,7 @@ impl Ui {
             stop_button,
             running: Cell::new(false),
             stop: Rc::new(Cell::new(false)),
+            settings,
         }
     }
 
@@ -210,6 +228,45 @@ impl Ui {
 
         self.banner.set_revealed(true);
         self.stack.set_visible_child_name(PAGE_READY);
+    }
+
+    /// Whether the user has already acknowledged the safety notice.
+    fn consent_accepted(&self) -> bool {
+        self.settings
+            .as_ref()
+            .is_some_and(|s| s.boolean("consent-accepted"))
+    }
+
+    /// Shows the first-run safety notice. Accepting unlocks the app and
+    /// persists the acknowledgement; declining closes the window.
+    fn present_consent(self: &Rc<Self>) {
+        let dialog = adw::AlertDialog::new(
+            Some("Safety Notice"),
+            Some(
+                "Heatr is NOT a certified medical product. It is not proven safe \
+                 for use on human skin, and the authors are not liable for any \
+                 damage you do to yourself using it.\n\n\
+                 Only continue if you understand the risk and accept it.",
+            ),
+        );
+        dialog.add_response("quit", "Quit");
+        dialog.add_response("accept", "I Understand");
+        dialog.set_response_appearance("accept", adw::ResponseAppearance::Suggested);
+        dialog.set_default_response(Some("accept"));
+        dialog.set_close_response("quit");
+
+        let ui = Rc::clone(self);
+        dialog.connect_response(None, move |_, response| {
+            if response == "accept" {
+                if let Some(settings) = &ui.settings {
+                    let _ = settings.set_boolean("consent-accepted", true);
+                }
+                ui.refresh();
+            } else {
+                ui.window.close();
+            }
+        });
+        dialog.present(Some(&self.window));
     }
 
     /// Reads the session preferences from the input rows.
