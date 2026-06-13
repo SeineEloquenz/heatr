@@ -46,4 +46,10 @@ rustPlatform.buildRustPackage {
   cargoLock = {
     lockFile = ../Cargo.lock;
   };
+
+  meta = {
+    description = "CLI for heat-based USB insect bite healers";
+    license = lib.licenses.gpl3Plus;
+    mainProgram = "heatr";
+  };
 }
