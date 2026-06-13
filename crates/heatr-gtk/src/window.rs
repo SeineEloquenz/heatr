@@ -4,6 +4,7 @@ use std::cell::Cell;
 use std::rc::Rc;
 
 use adw::prelude::*;
+use futures_util::StreamExt;
 use gtk::{gio, glib};
 use heatr::{Duration, Generation, HeatingPhase, HeatingStatus, Preferences, SkinSensitivity};
 use tracing::error;
@@ -41,7 +42,7 @@ pub fn build(app: &adw::Application) -> adw::ApplicationWindow {
 
     // Gate first use behind the safety acknowledgement.
     if ui.consent_accepted() {
-        ui.refresh();
+        ui.unlock();
     } else {
         ui.present_consent();
     }
@@ -261,12 +262,27 @@ impl Ui {
                 if let Some(settings) = &ui.settings {
                     let _ = settings.set_boolean("consent-accepted", true);
                 }
-                ui.refresh();
+                ui.unlock();
             } else {
                 ui.window.close();
             }
         });
         dialog.present(Some(&self.window));
+    }
+
+    /// Unlocks the app after consent: scans for a device and starts watching
+    /// for hotplug changes so the view stays current without manual refresh.
+    fn unlock(self: &Rc<Self>) {
+        self.refresh();
+
+        let ui = Rc::clone(self);
+        glib::spawn_future_local(async move {
+            let events = device::watch();
+            let mut events = std::pin::pin!(events);
+            while events.next().await.is_some() {
+                ui.refresh();
+            }
+        });
     }
 
     /// Reads the session preferences from the input rows.
