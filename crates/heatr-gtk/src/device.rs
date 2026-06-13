@@ -1,5 +1,6 @@
 //! Device discovery and connection.
 
+use futures_util::Stream;
 use heatr::HeatItDevice;
 use heatr::error::Result;
 
@@ -45,6 +46,21 @@ mod imp {
     pub async fn connect() -> Result<HeatItDevice> {
         Api::new().connect().await
     }
+
+    /// Yields whenever connected USB devices change, for auto-refresh.
+    ///
+    /// If a hotplug watch can't be set up, returns an empty stream so the app
+    /// simply falls back to manual refresh.
+    pub fn watch() -> impl Stream<Item = ()> {
+        use futures_util::StreamExt;
+        match Api::new().watch() {
+            Ok(stream) => stream.left_stream(),
+            Err(e) => {
+                tracing::warn!("Hotplug watch unavailable: {e}; use manual refresh");
+                futures_util::stream::pending().right_stream()
+            }
+        }
+    }
 }
 
 #[cfg(feature = "mock-device")]
@@ -66,6 +82,11 @@ mod imp {
     pub async fn connect() -> Result<HeatItDevice> {
         Ok(HeatItDevice::new(Box::new(MockBulkTransferDevice::new())))
     }
+
+    /// The simulated device is always present, so nothing ever changes.
+    pub fn watch() -> impl Stream<Item = ()> {
+        futures_util::stream::pending()
+    }
 }
 
-pub use imp::{connect, discover};
+pub use imp::{connect, discover, watch};

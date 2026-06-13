@@ -44,7 +44,7 @@ use devices::find_bite_healers;
 #[cfg(not(target_os = "android"))]
 use error::Result;
 #[cfg(not(target_os = "android"))]
-use futures_util::StreamExt;
+use futures_util::{Stream, StreamExt};
 #[cfg(not(target_os = "android"))]
 use tracing::{info, warn};
 
@@ -57,6 +57,15 @@ impl Api {
     /// Creates a new `Api` instance.
     pub fn new() -> Self {
         Api
+    }
+
+    /// Returns a stream that yields whenever the set of connected USB devices
+    /// changes (any attach or detach), so callers can re-run discovery.
+    ///
+    /// The stream is independent of `self` (`use<>`), so it can outlive the
+    /// `Api` it was created from.
+    pub fn watch(&self) -> Result<impl Stream<Item = ()> + Send + use<>> {
+        Ok(nusb::watch_devices()?.map(|_| ()))
     }
 
     /// Shows a list of USB bite healers connected to the host.

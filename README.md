@@ -25,11 +25,31 @@ cargo test
 
 ### Linux udev rules
 
-Without udev rules, opening the device requires root. Copy the rule file:
+Without udev rules, opening the device requires root. This applies to both the
+CLI and the desktop app. Copy the rule file:
 
 ```bash
-sudo cp udev/60-heatr.rules /etc/udev/rules.d/
+sudo cp nix/udev/60-itchcraft.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
+---
+
+## Desktop app (GTK)
+
+`heatr-gtk` is a native GTK4 / libadwaita client. Plug in a supported device,
+choose your settings, and run a heating session from a graphical UI.
+
+It needs the GTK4 and libadwaita system libraries. The dev shell provides them:
+
+```bash
+nix develop # drops you into a shell with gtk4 + libadwaita
+
+# Run from source
+cargo run -p heatr-gtk
+
+# Run against a simulated device — no hardware required.
+cargo run -p heatr-gtk --features mock-device
 ```
 
 ---
