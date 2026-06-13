@@ -719,9 +719,11 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "futures-timer",
+ "futures-util",
  "gtk4",
  "heatr",
  "libadwaita",
+ "pollster",
  "tracing",
  "tracing-subscriber",
 ]
