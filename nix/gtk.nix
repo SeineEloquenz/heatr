@@ -32,6 +32,7 @@ rustPlatform.buildRustPackage {
     rustfmt
     clippy
     wrapGAppsHook4
+    glib
   ];
 
   buildInputs = [
@@ -65,9 +66,9 @@ rustPlatform.buildRustPackage {
       $out/share/metainfo/nz.eloque.heatr.metainfo.xml
     install -Dm644 crates/heatr-gtk/data/icons/hicolor/scalable/apps/nz.eloque.heatr.svg \
       $out/share/icons/hicolor/scalable/apps/nz.eloque.heatr.svg
-    # The glib setup hook compiles schemas found here during fixup.
     install -Dm644 crates/heatr-gtk/data/nz.eloque.heatr.gschema.xml \
       $out/share/glib-2.0/schemas/nz.eloque.heatr.gschema.xml
+    glib-compile-schemas $out/share/glib-2.0/schemas
   '';
 
   meta = {
