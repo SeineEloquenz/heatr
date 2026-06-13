@@ -2,6 +2,7 @@
 name = "heatr-gtk"
 version = "0.1.0"
 edition = "2024"
+license.workspace = true
 
 [[bin]]
 name = "heatr-gtk"
