@@ -9,7 +9,7 @@ let
   ndkVersion = "29.0.14206865";
 
   buildToolsVersions = [ buildToolsVersion ];
-  platformVersions = [ "37" ];
+  platformVersions = [ "36" ];
   ndkVersions = [ ndkVersion ];
 
   pkgs = import nixpkgs {
