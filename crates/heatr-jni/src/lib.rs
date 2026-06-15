@@ -14,6 +14,8 @@ use jni::{
     sys::{jint, jintArray, jlong},
     {jni_sig, jni_str},
 };
+#[cfg(target_os = "android")]
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug)]
 struct NativeError(String);
@@ -38,14 +40,25 @@ impl From<heatr::HeatrError> for NativeError {
     }
 }
 
+#[cfg(target_os = "android")]
+fn init_logging() {
+    tracing_subscriber::registry()
+        .with(tracing_android::layer("heatr").unwrap())
+        .init();
+}
+
+#[cfg(not(target_os = "android"))]
+fn init_logging() {
+    tracing_subscriber::fmt().init();
+}
+
 /// Called by the JVM when the native library is first loaded.
 #[unsafe(no_mangle)]
 pub extern "system" fn JNI_OnLoad(
     _vm: *mut jni::sys::JavaVM,
     _reserved: *mut std::ffi::c_void,
 ) -> jni::sys::jint {
-    #[cfg(target_os = "android")]
-    android_logger::init_once(android_logger::Config::default().with_tag("heatr"));
+    init_logging();
     // Android only supports JNI 1.6
     jni::sys::JNI_VERSION_1_6
 }
