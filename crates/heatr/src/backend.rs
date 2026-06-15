@@ -121,13 +121,41 @@ impl UsbBulkTransferDevice {
         Self::setup_endpoints(device, None, None).await
     }
 
-    /// Discovers bulk IN/OUT endpoints on the active configuration and claims
-    /// the interface. Shared by both `open` and `from_fd`.
+    async fn find_configuration(device: &nusb::Device) -> Result<u8> {
+        // Select the non-iAP configuration.
+        let mut selected_config = None;
+
+        for config in device.configurations() {
+            let is_iap = config.interfaces().any(|interface| {
+                interface
+                    .alt_settings()
+                    .any(|alt| alt.class() == 0xff && alt.subclass() == 0xf0)
+            });
+
+            if !is_iap {
+                selected_config = Some(config.configuration_value());
+                break;
+            }
+        }
+
+        let selected_config = selected_config.ok_or_else(|| {
+            HeatrError::EndpointNotFound("No non-iAP USB configuration found".into())
+        })?;
+
+        Ok(selected_config)
+    }
+
+    /// Discovers bulk IN/OUT endpoints on the USB configuration (not the iAP
+    /// configuration) and claims the interface.
     async fn setup_endpoints(
         device: nusb::Device,
         product_name: Option<String>,
         serial_number: Option<String>,
     ) -> Result<Self> {
+        device
+            .set_configuration(UsbBulkTransferDevice::find_configuration(&device).await?)
+            .await?;
+
         let config = device.active_configuration()?;
 
         let mut endpoint_out = None;
@@ -136,6 +164,11 @@ impl UsbBulkTransferDevice {
 
         'outer: for interface in config.interfaces() {
             for alt in interface.alt_settings() {
+                // Skip iAP interfaces just in case.
+                if alt.class() == 0xff && alt.subclass() == 0xf0 {
+                    continue;
+                }
+
                 let mut out = None;
                 let mut input = None;
 
