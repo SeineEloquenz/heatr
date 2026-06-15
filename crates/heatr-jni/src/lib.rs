@@ -46,7 +46,8 @@ pub extern "system" fn JNI_OnLoad(
 ) -> jni::sys::jint {
     #[cfg(target_os = "android")]
     android_logger::init_once(android_logger::Config::default().with_tag("heatr"));
-    jni::sys::JNI_VERSION_1_8
+    // Android only supports JNI 1.6
+    jni::sys::JNI_VERSION_1_6
 }
 
 /// Opens a `HeatItDevice` from a file descriptor obtained via
