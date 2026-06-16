@@ -81,32 +81,73 @@ cksum = sum(bytes[1..=10]) % 256  →  stored in byte[11]
 (i.e., covers the full echo header + 6 data bytes.)
 
 ---
-
 ## GET_STATUS response fields
 
 ```
 [0]  ff      SOF
 [1]  00      response type (always 0x00)
-[2]  01      fixed
-[3]  temp    temperature — raw ADC value (~0x34 cold, rises to ~0xE1 at peak)
-[4]  flags   0x80 = heating element on; 0x00 = element off
-[5]  phase   treatment phase:
-               0x00 = idle (no treatment in progress)
-               0x01 = active treatment (element on OR element just turned off,
-                      temperature still rising toward target)
-               0x02 = stabilisation / cooling toward green-LED state
-[6]  ??      varies during operation (possible timer/control value)
-[7]  ??      varies during operation
-[8]  cksum   sum(bytes[1..=7]) % 256
-[9]  ff      }
-[10] ff      } fixed footer
-[11] 4f      }
+
+[2]  temp_hi \
+[3]  temp_lo /  temperature-related measurement
+
+[4]  flags
+               0x80 = heating element enabled
+               0x00 = heating element disabled
+
+[5]  phase
+               0x00 = idle / finished
+               0x01 = active heating / ramp-up
+               0x02 = regulation / hold phase
+
+[6]  ctrl_a   control-loop value (purpose unknown)
+[7]  ctrl_b   control-loop value (purpose unknown)
+
+[8]  cksum    sum(bytes[1..=7]) % 256
+
+[9]  ff
+[10] ff
+[11] 4f
 ```
 
-The correct "treatment complete" exit condition is `flags == 0x00 && phase == 0x00`.
-`flags == 0x00` alone is not sufficient — the device passes through `phase=0x01` and
-`phase=0x02` after the element turns off, and may even briefly re-enable the element
-(`flags=0x80, phase=0x00`) at the very end before settling to idle.
+### Tentative Celsius interpretation
+
+The device manufacturer advertises treatment temperatures of approximately:
+
+```
+47°C – 52°C
+```
+
+The observed peak values:
+
+```
+0x01FA = 506
+0x0206 = 518
+```
+
+would correspond to:
+
+```
+50.6°C
+51.8°C
+```
+
+if the field is interpreted as temperature in tenths of a degree Celsius.
+
+Therefore the current best hypothesis is:
+
+```rust
+let temperature_raw =
+    ((packet[2] as u16) << 8) | packet[3] as u16;
+
+let temperature_celsius =
+    temperature_raw as f32 / 10.0;
+```
+
+This interpretation matches:
+
+* the observed heating ramp,
+* the observed regulation around 51–52°C,
+* and the manufacturer's published temperature range.
 
 ---
 

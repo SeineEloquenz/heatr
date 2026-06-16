@@ -64,7 +64,7 @@ fun HeatrScreen(
                         HeatingPhase.APPLYING -> "Applying"
                         HeatingPhase.DONE -> "Done"
                     }
-                "$phaseName — temp: 0x${state.temperature.toString(16)}"
+                "$phaseName — temp: ${state.temperature / 10} °C"
             }
 
             is HeatingViewModel.State.Done -> {

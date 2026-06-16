@@ -45,8 +45,8 @@ pub enum HeatingPhase {
 #[derive(Debug, Clone, Copy)]
 pub struct HeatingStatus {
     pub phase: HeatingPhase,
-    /// Raw ADC temperature value (~0x46 cold, rises to ~0xE1 at peak).
-    pub temperature: u8,
+    /// Raw ADC temperature value (Assumed to be degree_celsius = temperature / 10, but not confirmed).
+    pub temperature: u16,
 }
 
 const MIN_RESPONSE_LEN: usize = 2;
@@ -145,7 +145,7 @@ impl HeatItDevice {
         };
         Ok(HeatingStatus {
             phase,
-            temperature: r[3],
+            temperature: ((r[2] as u16) << 8) | (r[3] as u16),
         })
     }
 

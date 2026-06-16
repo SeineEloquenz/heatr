@@ -149,13 +149,13 @@ fn main() {
             let mut heated = false;
             let result = pollster::block_on(api.start(preferences, |status: &HeatingStatus| {
                 if status.phase == HeatingPhase::Heating {
-                    pb.set_message(format!("Heating    temp {:3}/225", status.temperature));
+                    pb.set_message(format!("Heating    temp {}", status.temperature / 10));
                 } else {
                     if !heated {
                         pb.println("  Heated.");
                         heated = true;
                     }
-                    pb.set_message(format!("Applying   temp {:3}/225", status.temperature));
+                    pb.set_message(format!("Applying   temp {}", status.temperature / 10));
                 }
             }));
             match result {
