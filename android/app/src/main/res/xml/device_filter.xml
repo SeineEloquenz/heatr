@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    VID 0x32F9 = 13049 (decimal)
+    Supported PIDs: 0x0001–0x0006 = 1–6, 0xFCA9 = 64681, 0xFCBA = 64698
+-->
+<resources>
+    <usb-device vendor-id="13049" product-id="1" />
+    <usb-device vendor-id="13049" product-id="2" />
+    <usb-device vendor-id="13049" product-id="3" />
+    <usb-device vendor-id="13049" product-id="4" />
+    <usb-device vendor-id="13049" product-id="5" />
+    <usb-device vendor-id="13049" product-id="6" />
+    <usb-device vendor-id="13049" product-id="64681" />
+    <usb-device vendor-id="13049" product-id="64698" />
+</resources>
