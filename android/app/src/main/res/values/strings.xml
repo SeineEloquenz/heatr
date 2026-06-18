@@ -12,4 +12,6 @@
     <string name="treatment_phase_applying">Applying</string>
     <string name="treatment_phase_done">Done</string>
     <string name="treatment_cycle_complete">Cycle complete</string>
+    <string name="action_retry_treatment">Retry treatment</string>
+    <string name="treatment_note_active_session">Active session</string>
 </resources>

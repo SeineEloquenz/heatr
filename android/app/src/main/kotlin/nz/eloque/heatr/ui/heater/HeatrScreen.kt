@@ -1,6 +1,13 @@
 package nz.eloque.heatr.ui.heater
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,12 +19,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.ChildCare
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Spa
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults.elevatedCardColors
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -32,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -214,35 +224,136 @@ fun HeatrScreen(
         }
 
         item {
-            Spacer(Modifier.height(8.dp))
-
-            Button(
-                onClick = {
+            TreatmentActionCard(
+                state = state,
+                enabled = startEnabled,
+                temperature = (state as? HeatingViewModel.State.Heating)?.temperature,
+                onStart = {
                     onStart(
                         Duration.entries[durationIndex],
                         Generation.entries[generationIndex],
                         SkinSensitivity.entries[skinIndex],
                     )
                 },
-                enabled = startEnabled,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(60.dp),
-            ) {
-                Text(stringResource(R.string.action_start_treatment))
-            }
+            )
         }
+    }
+}
 
-        if (progressText.isNotEmpty()) {
-            item {
-                Text(
-                    progressText,
-                    style = MaterialTheme.typography.bodyMedium,
+@Composable
+private fun TreatmentActionCard(
+    state: HeatingViewModel.State,
+    enabled: Boolean,
+    temperature: Int?,
+    onStart: () -> Unit,
+) {
+    val (title, color, clickable) =
+        when (state) {
+            is HeatingViewModel.State.Heating -> {
+                val phaseText =
+                    when (state.phase) {
+                        HeatingPhase.HEATING -> stringResource(R.string.treatment_phase_heating)
+                        HeatingPhase.APPLYING -> stringResource(R.string.treatment_phase_applying)
+                        HeatingPhase.DONE -> stringResource(R.string.treatment_phase_done)
+                    }
+
+                Triple(
+                    "$phaseText • ${temperature ?: "--"}°C",
+                    MaterialTheme.colorScheme.tertiary,
+                    false,
+                )
+            }
+
+            is HeatingViewModel.State.Error -> {
+                Triple(
+                    stringResource(R.string.action_retry_treatment),
+                    MaterialTheme.colorScheme.error,
+                    enabled,
+                )
+            }
+
+            else -> {
+                Triple(
+                    stringResource(R.string.action_start_treatment),
+                    MaterialTheme.colorScheme.primary,
+                    enabled,
                 )
             }
         }
+
+    val pulse by animateFloatAsState(
+        targetValue = if (state is HeatingViewModel.State.Heating) 1f else 0.85f,
+        label = "pulse",
+    )
+
+    Card(
+        onClick = {
+            if (clickable) onStart()
+        },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .graphicsLayer {
+                    scaleX = pulse
+                    scaleY = pulse
+                },
+        colors =
+            elevatedCardColors(
+                containerColor = color.copy(alpha = 0.15f),
+            ),
+    ) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = color,
+                )
+
+                if (state is HeatingViewModel.State.Heating) {
+                    Text(
+                        text = stringResource(R.string.treatment_note_active_session),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = color.copy(alpha = 0.7f),
+                    )
+                }
+            }
+
+            if (state is HeatingViewModel.State.Heating) {
+                PulsingDot(color)
+            }
+        }
     }
+}
+
+@Composable
+private fun PulsingDot(color: androidx.compose.ui.graphics.Color) {
+    val alpha by rememberInfiniteTransition().animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(800),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "dot",
+    )
+
+    Spacer(
+        modifier =
+            Modifier
+                .size(10.dp)
+                .background(color.copy(alpha = alpha), shape = CircleShape),
+    )
 }
 
 @Composable
