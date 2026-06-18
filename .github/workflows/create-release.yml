@@ -109,7 +109,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: android/app/build/outputs/apk/release
 
   build-bundle:
     name: Build Release Bundle
@@ -167,5 +167,5 @@ jobs:
         id: create-release
         uses: softprops/action-gh-release@v3
         with:
-          files: apk/app-release.apk
+          files: apk/**/*.apk
           body_path: changelog/changelog.txt
