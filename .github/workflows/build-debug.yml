@@ -11,10 +11,6 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-defaults:
-  run:
-    working-directory: ./android
-
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   validation:
@@ -44,9 +40,11 @@ jobs:
         run: rustup target add aarch64-linux-android && rustup target add armv7-linux-androideabi && rustup target add x86_64-linux-android
 
       - name: Lint
+        working-directory: ./android
         run: ./gradlew ktlintCheck
 
       - name: Test and Build
+        working-directory: ./android
         run: ./gradlew testDebugUnitTest assembleDebug
 
       - name: Upload Apk
