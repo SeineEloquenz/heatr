@@ -24,6 +24,22 @@ val cargoNdkRelease by tasks.registering(Exec::class) {
 // ===== /CARGO =====
 
 android {
+    dependenciesInfo {
+        // Disables dependency metadata when building APKs.
+        includeInApk = false
+        // Disables dependency metadata when building Android App Bundles.
+        includeInBundle = false
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getProperty("user.home") + "/work/_temp/keystore.jks")
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
+            keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+            keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+        }
+    }
+
     namespace = "nz.eloque.heatr"
     compileSdk = 37
 
@@ -35,6 +51,9 @@ android {
         versionName = "0.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
     }
 
     buildTypes {
@@ -48,6 +67,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     compileOptions {
