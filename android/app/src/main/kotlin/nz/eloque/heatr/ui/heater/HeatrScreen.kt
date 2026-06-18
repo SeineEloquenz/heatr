@@ -50,6 +50,7 @@ import nz.eloque.heatr.api.Duration
 import nz.eloque.heatr.api.Generation
 import nz.eloque.heatr.api.HeatingPhase
 import nz.eloque.heatr.api.SkinSensitivity
+import nz.eloque.heatr.ui.components.PulsingDot
 
 @Composable
 fun HeatrScreen(
@@ -333,27 +334,6 @@ private fun TreatmentActionCard(
             }
         }
     }
-}
-
-@Composable
-private fun PulsingDot(color: androidx.compose.ui.graphics.Color) {
-    val alpha by rememberInfiniteTransition().animateFloat(
-        initialValue = 0.3f,
-        targetValue = 1f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(800),
-                repeatMode = RepeatMode.Reverse,
-            ),
-        label = "dot",
-    )
-
-    Spacer(
-        modifier =
-            Modifier
-                .size(10.dp)
-                .background(color.copy(alpha = alpha), shape = CircleShape),
-    )
 }
 
 @Composable
