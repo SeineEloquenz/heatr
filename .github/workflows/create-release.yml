@@ -127,6 +127,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
       - name: Setup cargo ndk
         run: cargo install cargo-ndk
+      - name: Add android target
+        run: rustup target add aarch64-linux-android
       - name: Test and Bundle Release
         run: ./gradlew testDebugUnitTest bundleRelease
         env:

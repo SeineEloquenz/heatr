@@ -40,6 +40,8 @@ jobs:
 
       - name: Setup cargo ndk
         run: cargo install cargo-ndk
+      - name: Add android target
+        run: rustup target add aarch64-linux-android
 
       - name: Lint
         run: ./gradlew ktlintCheck
