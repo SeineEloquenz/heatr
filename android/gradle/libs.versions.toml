@@ -11,6 +11,7 @@ composeBom = "2026.05.01"
 composeKit = "v0.0.9"
 activityCompose = "1.13.0"
 lifecycleRuntimeKtx = "2.10.0"
+ktlint = "14.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,4 +32,4 @@ compose-kit = { module = "com.github.SeineEloquenz.compose-kit:lib-android", ver
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
