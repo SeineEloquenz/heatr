@@ -128,7 +128,7 @@ jobs:
       - name: Setup cargo ndk
         run: cargo install cargo-ndk
       - name: Add android target
-        run: rustup target add aarch64-linux-android
+        run: rustup target add aarch64-linux-android && rustup target add armv7-linux-androideabi && rustup target add x86_64-linux-android
       - name: Test and Bundle Release
         run: ./gradlew testDebugUnitTest bundleRelease
         env:
