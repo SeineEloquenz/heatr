@@ -67,28 +67,6 @@ fun HeatrScreen(
             else -> false
         }
 
-    val progressText =
-        when (state) {
-            is HeatingViewModel.State.Heating -> {
-                val phase =
-                    when (state.phase) {
-                        HeatingPhase.HEATING -> stringResource(R.string.treatment_phase_heating)
-                        HeatingPhase.APPLYING -> stringResource(R.string.treatment_phase_applying)
-                        HeatingPhase.DONE -> stringResource(R.string.treatment_phase_done)
-                    }
-
-                "$phase • ${state.temperature}°C"
-            }
-
-            HeatingViewModel.State.Done -> {
-                stringResource(R.string.treatment_cycle_complete)
-            }
-
-            else -> {
-                ""
-            }
-        }
-
     LaunchedEffect(Unit) {
         onInit()
     }
