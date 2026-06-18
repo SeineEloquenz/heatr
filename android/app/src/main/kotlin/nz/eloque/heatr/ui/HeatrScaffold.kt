@@ -70,7 +70,7 @@ fun HeatrScaffold(
             modifier =
                 modifier
                     .padding(innerPadding)
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 16.dp),
         ) {
             content.invoke(scrollBehavior)
         }
