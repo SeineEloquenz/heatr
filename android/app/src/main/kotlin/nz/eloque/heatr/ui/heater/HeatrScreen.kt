@@ -32,8 +32,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import nz.eloque.heatr.R
 import nz.eloque.heatr.api.Duration
 import nz.eloque.heatr.api.Generation
 import nz.eloque.heatr.api.HeatingPhase
@@ -67,16 +69,16 @@ fun HeatrScreen(
             is HeatingViewModel.State.Heating -> {
                 val phase =
                     when (state.phase) {
-                        HeatingPhase.HEATING -> "Heating"
-                        HeatingPhase.APPLYING -> "Applying"
-                        HeatingPhase.DONE -> "Done"
+                        HeatingPhase.HEATING -> stringResource(R.string.treatment_phase_heating)
+                        HeatingPhase.APPLYING -> stringResource(R.string.treatment_phase_applying)
+                        HeatingPhase.DONE -> stringResource(R.string.treatment_phase_done)
                     }
 
                 "$phase • ${state.temperature}°C"
             }
 
             HeatingViewModel.State.Done -> {
-                "Cycle complete"
+                stringResource(R.string.treatment_cycle_complete)
             }
 
             else -> {
@@ -102,7 +104,7 @@ fun HeatrScreen(
         }
 
         item {
-            SectionTitle("Duration")
+            SectionTitle(stringResource(R.string.setting_title_duration))
         }
 
         item {
@@ -133,7 +135,7 @@ fun HeatrScreen(
         }
 
         item {
-            SectionTitle("Generation")
+            SectionTitle(stringResource(R.string.setting_title_generation))
         }
 
         item {
@@ -142,7 +144,7 @@ fun HeatrScreen(
             ) {
                 SelectionCard(
                     modifier = Modifier.weight(1f),
-                    title = "Child",
+                    title = stringResource(R.string.setting_child),
                     icon = {
                         Icon(
                             Icons.Outlined.ChildCare,
@@ -158,7 +160,7 @@ fun HeatrScreen(
 
                 SelectionCard(
                     modifier = Modifier.weight(1f),
-                    title = "Adult",
+                    title = stringResource(R.string.setting_adult),
                     icon = {
                         Icon(
                             Icons.Outlined.Person,
@@ -175,7 +177,7 @@ fun HeatrScreen(
         }
 
         item {
-            SectionTitle("Skin sensitivity")
+            SectionTitle(stringResource(R.string.setting_title_skin_sensitivity))
         }
 
         item {
@@ -197,7 +199,7 @@ fun HeatrScreen(
                     Spacer(Modifier.size(16.dp))
 
                     Text(
-                        "Sensitive",
+                        stringResource(R.string.setting_sensitive),
                         modifier = Modifier.weight(1f),
                     )
 
@@ -228,7 +230,7 @@ fun HeatrScreen(
                         .fillMaxWidth()
                         .height(60.dp),
             ) {
-                Text("Start")
+                Text(stringResource(R.string.action_start_treatment))
             }
         }
 

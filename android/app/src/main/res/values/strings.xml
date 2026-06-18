@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Heatr</string>
+    <string name="action_start_treatment">Start</string>
+    <string name="setting_sensitive">Sensitive</string>
+    <string name="setting_title_skin_sensitivity">Skin sensitivity</string>
+    <string name="setting_adult">Adult</string>
+    <string name="setting_child">Child</string>
+    <string name="setting_title_generation">Generation</string>
+    <string name="setting_title_duration">Duration</string>
+    <string name="treatment_phase_heating">Heating</string>
+    <string name="treatment_phase_applying">Applying</string>
+    <string name="treatment_phase_done">Done</string>
+    <string name="treatment_cycle_complete">Cycle complete</string>
 </resources>
