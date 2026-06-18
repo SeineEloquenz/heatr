@@ -13,10 +13,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import nz.eloque.heatr.api.Heatr
@@ -24,6 +26,32 @@ import nz.eloque.heatr.ui.HeatrScaffold
 import nz.eloque.heatr.ui.heater.HeatingViewModel
 import nz.eloque.heatr.ui.heater.HeatrScreen
 import nz.eloque.heatr.ui.theme.HeatrTheme
+
+sealed class UsbState {
+    object Disconnected : UsbState()
+
+    object FailedToOpen : UsbState()
+
+    data class Error(
+        val message: String,
+    ) : UsbState()
+
+    object PermissionDenied : UsbState()
+
+    data class Ready(
+        val name: String,
+    ) : UsbState()
+
+    @Composable
+    fun name(): String =
+        when (this) {
+            Disconnected -> stringResource(R.string.state_no_device)
+            FailedToOpen -> stringResource(R.string.state_failed_to_open)
+            PermissionDenied -> stringResource(R.string.state_permission_denied)
+            is Error -> "${stringResource(R.string.state_error)}:${this.message}"
+            is Ready -> "${stringResource(R.string.state_ready)}:${this.name}"
+        }
+}
 
 class MainActivity : ComponentActivity() {
     private companion object {
@@ -33,7 +61,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var usbManager: UsbManager
     private val viewModel: HeatingViewModel by viewModels()
 
-    private var statusText by mutableStateOf("No device connected")
+    private var usbState by mutableStateOf<UsbState>(UsbState.Disconnected)
     private var hasDevice by mutableStateOf(false)
     private var currentDevice: UsbDevice? = null
 
@@ -50,7 +78,7 @@ class MainActivity : ComponentActivity() {
                         if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                             device?.let { openDevice(it) }
                         } else {
-                            statusText = "USB permission denied"
+                            usbState = UsbState.PermissionDenied
                         }
                     }
 
@@ -61,7 +89,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     UsbManager.ACTION_USB_DEVICE_DETACHED -> {
-                        statusText = "Device disconnected"
+                        usbState = UsbState.Disconnected
                         currentDevice = null
                         hasDevice = false
                         viewModel.deviceDisconnected()
@@ -91,15 +119,11 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(state) {
                 when (state) {
                     is HeatingViewModel.State.NoDevice -> {
-                        statusText = "No device connected"
-                    }
-
-                    is HeatingViewModel.State.DeviceReady -> {
-                        statusText = "Device ready"
+                        usbState = UsbState.Disconnected
                     }
 
                     is HeatingViewModel.State.Error -> {
-                        statusText = "Error: ${(state as HeatingViewModel.State.Error).message}"
+                        usbState = UsbState.Error((state as HeatingViewModel.State.Error).message)
                     }
 
                     else -> {}
@@ -109,7 +133,7 @@ class MainActivity : ComponentActivity() {
             HeatrTheme {
                 HeatrScaffold {
                     HeatrScreen(
-                        statusText = statusText,
+                        usbState = usbState,
                         state = state,
                         hasDevice = hasDevice,
                         onInit = { viewModel.runInit() },
@@ -141,7 +165,7 @@ class MainActivity : ComponentActivity() {
         if (!isSupported(device)) return
         currentDevice = device
         hasDevice = true
-        statusText = "Device found: ${device.productName ?: "heat it"}"
+        usbState = UsbState.Ready(device.productName ?: getString(R.string.unnamed_device))
 
         if (usbManager.hasPermission(device)) {
             openDevice(device)
@@ -160,7 +184,7 @@ class MainActivity : ComponentActivity() {
     private fun openDevice(device: UsbDevice) {
         val connection =
             usbManager.openDevice(device) ?: run {
-                statusText = "Failed to open USB connection"
+                usbState = UsbState.FailedToOpen
                 return
             }
         viewModel.openDevice(connection.fileDescriptor)

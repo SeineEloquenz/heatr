@@ -14,4 +14,10 @@
     <string name="treatment_cycle_complete">Cycle complete</string>
     <string name="action_retry_treatment">Retry treatment</string>
     <string name="treatment_note_active_session">Active session</string>
+    <string name="state_no_device">No connected device</string>
+    <string name="state_permission_denied">USB permission denied</string>
+    <string name="state_failed_to_open">Failed to open device</string>
+    <string name="state_error">Error</string>
+    <string name="state_ready">Device ready</string>
+    <string name="unnamed_device">Unnamed Device</string>
 </resources>

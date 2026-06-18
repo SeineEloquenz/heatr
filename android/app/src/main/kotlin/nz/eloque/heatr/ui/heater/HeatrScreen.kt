@@ -35,14 +35,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import nz.eloque.heatr.R
+import nz.eloque.heatr.UsbState
 import nz.eloque.heatr.api.Duration
 import nz.eloque.heatr.api.Generation
 import nz.eloque.heatr.api.SkinSensitivity
 import nz.eloque.heatr.ui.components.TreatmentActionCard
+import nz.eloque.heatr.ui.components.UsbStateCard
 
 @Composable
 fun HeatrScreen(
-    statusText: String,
+    usbState: UsbState,
     state: HeatingViewModel.State,
     hasDevice: Boolean,
     onInit: () -> Unit,
@@ -73,13 +75,6 @@ fun HeatrScreen(
                 .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        item {
-            Text(
-                text = statusText,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
-
         item {
             SectionTitle(stringResource(R.string.setting_title_duration))
         }
@@ -191,18 +186,22 @@ fun HeatrScreen(
         }
 
         item {
-            TreatmentActionCard(
-                state = state,
-                enabled = startEnabled,
-                temperature = (state as? HeatingViewModel.State.Heating)?.temperature,
-                onStart = {
-                    onStart(
-                        Duration.entries[durationIndex],
-                        Generation.entries[generationIndex],
-                        SkinSensitivity.entries[skinIndex],
-                    )
-                },
-            )
+            if (usbState is UsbState.Ready) {
+                TreatmentActionCard(
+                    state = state,
+                    enabled = startEnabled,
+                    temperature = (state as? HeatingViewModel.State.Heating)?.temperature,
+                    onStart = {
+                        onStart(
+                            Duration.entries[durationIndex],
+                            Generation.entries[generationIndex],
+                            SkinSensitivity.entries[skinIndex],
+                        )
+                    },
+                )
+            } else {
+                UsbStateCard(usbState)
+            }
         }
     }
 }
