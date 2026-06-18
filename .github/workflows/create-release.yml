@@ -38,6 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Prepare Changelog
+        working-directory: ./android
         run: |
           mkdir -p changelog
           cp fastlane/metadata/android/en-US/changelogs/${{ needs.read-version.outputs.version_code }}.txt changelog/changelog.txt
@@ -45,7 +46,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: changelog
-          path: changelog
+          path: android/changelog
 
   prepare-release-notes:
     name: Prepare Release Notes
@@ -55,6 +56,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Prepare Google Play release notes
+        working-directory: ./android
         run: |
           mkdir -p whatsnew
           for locale_dir in fastlane/metadata/android/*; do
@@ -71,7 +73,7 @@ jobs:
       - name: Upload Whats new
         uses: actions/upload-artifact@v7
         with:
-          name: whatsnew
+          name: android/whatsnew
           path: whatsnew
 
   build-apk:
