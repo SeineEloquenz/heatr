@@ -41,12 +41,27 @@ pub enum HeatingPhase {
     Done,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Temperature {
+    raw: u16,
+}
+
+impl Temperature {
+    pub fn from_raw(raw: u16) -> Temperature {
+        Temperature { raw }
+    }
+
+    pub fn as_celsius(&self) -> u16 {
+        self.raw / 10
+    }
+}
+
 /// Status snapshot returned by a GET_STATUS + POLL pair.
 #[derive(Debug, Clone, Copy)]
 pub struct HeatingStatus {
     pub phase: HeatingPhase,
     /// Raw ADC temperature value (Assumed to be degree_celsius = temperature / 10, but not confirmed).
-    pub temperature: u16,
+    pub temperature: Temperature,
 }
 
 const MIN_RESPONSE_LEN: usize = 2;
@@ -145,7 +160,9 @@ impl HeatItDevice {
         };
         Ok(HeatingStatus {
             phase,
-            temperature: ((r[2] as u16) << 8) | (r[3] as u16),
+            temperature: Temperature {
+                raw: ((r[2] as u16) << 8) | (r[3] as u16),
+            },
         })
     }
 

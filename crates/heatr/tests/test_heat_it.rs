@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use futures_util::{StreamExt, pin_mut};
 use heatr::backend::BulkTransferDevice;
-use heatr::heat_it::{HeatItDevice, HeatingPhase};
+use heatr::heat_it::{HeatItDevice, HeatingPhase, Temperature};
 use heatr::prefs::{Duration, Generation, Preferences, SkinSensitivity};
 
 // ---------------------------------------------------------------------------
@@ -355,7 +355,7 @@ fn poll_status_pairs_get_status_with_poll() {
 
         let status = device.poll_status().await.unwrap();
         assert_eq!(status.phase, HeatingPhase::Heating);
-        assert_eq!(status.temperature, 0x50);
+        assert_eq!(status.temperature, Temperature::from_raw(0x50));
 
         let requests = requests.lock().unwrap();
         assert_eq!(

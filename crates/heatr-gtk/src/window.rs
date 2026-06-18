@@ -351,7 +351,8 @@ impl Ui {
             HeatingPhase::Done => "Done",
         };
         self.phase_label.set_label(label);
-        self.temperature_bar.set_value(status.temperature as f64);
+        self.temperature_bar
+            .set_value(status.temperature.as_celsius() as f64);
     }
 
     /// Reports the session outcome and returns to device selection.

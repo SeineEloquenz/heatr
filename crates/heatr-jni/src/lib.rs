@@ -188,7 +188,10 @@ pub extern "system" fn Java_nz_eloque_heatr_native_HeatrJni_startHeating<'local>
                                     callback_ref.as_obj(),
                                     jni_str!("onProgress"),
                                     jni_sig!("(II)V"),
-                                    &[JValue::Int(phase), JValue::Int(status.temperature as i32)],
+                                    &[
+                                        JValue::Int(phase),
+                                        JValue::Int(status.temperature.as_celsius() as i32),
+                                    ],
                                 )?;
                                 Ok(())
                             })
