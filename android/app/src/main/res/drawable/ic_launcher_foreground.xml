@@ -1,30 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- Heat glow behind the contact tip -->
+    <path
+        android:fillColor="#FFFFD24D"
+        android:fillAlpha="0.30"
+        android:pathData="M164,372 a92,70 0 1,0 184,0 a92,70 0 1,0 -184,0 Z" />
+    <path
+        android:fillColor="#FFFFB13C"
+        android:fillAlpha="0.40"
+        android:pathData="M192,372 a64,50 0 1,0 128,0 a64,50 0 1,0 -128,0 Z" />
+
+    <!-- Device body -->
+    <path
+        android:strokeColor="#FF161B22"
+        android:strokeWidth="5"
+        android:pathData="M228,104 H284 A42,42 0 0,1 326,146 V322 A42,42 0 0,1 284,364 H228 A42,42 0 0,1 186,322 V146 A42,42 0 0,1 228,104 Z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:endX="85.84757"
-                android:endY="92.4963"
-                android:startX="42.9492"
-                android:startY="49.59793"
-                android:type="linear">
-                <item
-                    android:color="#44000000"
-                    android:offset="0.0" />
-                <item
-                    android:color="#00000000"
-                    android:offset="1.0" />
+                android:type="linear"
+                android:startX="256" android:startY="104"
+                android:endX="256" android:endY="364">
+                <item android:offset="0" android:color="#FF3D4654" />
+                <item android:offset="1" android:color="#FF222933" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Body gloss -->
+    <path android:pathData="M228,104 H284 A42,42 0 0,1 326,146 V322 A42,42 0 0,1 284,364 H228 A42,42 0 0,1 186,322 V146 A42,42 0 0,1 228,104 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="256" android:startY="104"
+                android:endX="256" android:endY="364">
+                <item android:offset="0" android:color="#38FFFFFF" />
+                <item android:offset="0.5" android:color="#00FFFFFF" />
+                <item android:offset="1" android:color="#00FFFFFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Lanyard loop -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFAAB2C0"
+        android:strokeWidth="6"
+        android:pathData="M240,146 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0 Z" />
+
+    <!-- Power button -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFAAB2C0"
+        android:strokeWidth="8"
+        android:pathData="M236,214 a20,20 0 1,0 40,0 a20,20 0 1,0 -40,0 Z" />
+    <path
+        android:fillColor="#FFAAB2C0"
+        android:pathData="M260,200 a4,4 0 0,0 -8,0 v12 a4,4 0 0,0 8,0 z" />
+
+    <!-- Heated ceramic contact tip -->
+    <path
+        android:strokeColor="#FFD83F22"
+        android:strokeWidth="4"
+        android:pathData="M228,338 H284 A22,22 0 0,1 306,360 V384 A22,22 0 0,1 284,406 H228 A22,22 0 0,1 206,384 V360 A22,22 0 0,1 228,338 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="256" android:centerY="366"
+                android:gradientRadius="64">
+                <item android:offset="0" android:color="#FFFFF6D6" />
+                <item android:offset="0.4" android:color="#FFFFD24D" />
+                <item android:offset="0.75" android:color="#FFFF7A2E" />
+                <item android:offset="1" android:color="#FFE8472B" />
             </gradient>
         </aapt:attr>
     </path>
     <path
-        android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+        android:fillColor="#FFFFF6D6"
+        android:fillAlpha="0.60"
+        android:pathData="M226,362 a30,18 0 1,0 60,0 a30,18 0 1,0 -60,0 Z" />
 </vector>
