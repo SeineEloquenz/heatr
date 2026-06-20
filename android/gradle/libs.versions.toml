@@ -8,7 +8,7 @@ espressoCore = "3.7.0"
 appcompat = "1.7.1"
 material = "1.14.0"
 composeBom = "2026.05.01"
-composeKit = "v0.0.9"
+composeKit = "0.1.1"
 activityCompose = "1.13.0"
 lifecycleRuntimeKtx = "2.10.0"
 ktlint = "14.2.0"
@@ -26,7 +26,7 @@ androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeKtx" }
-compose-kit = { module = "com.github.SeineEloquenz.compose-kit:lib-android", version.ref = "composeKit" }
+compose-kit = { module = "nz.eloque.compose-kit:lib", version.ref = "composeKit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
