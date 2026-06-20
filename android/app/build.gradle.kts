@@ -66,6 +66,9 @@ android {
             )
             signingConfig = signingConfigs["release"]
         }
+        debug {
+            applicationIdSuffix = ".dev"
+        }
     }
     buildFeatures {
         compose = true
