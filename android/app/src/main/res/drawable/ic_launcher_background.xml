@@ -1,33 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="512"
     android:viewportHeight="512">
-    <!-- Full-bleed warm gradient -->
-    <path android:pathData="M0,0H512V512H0Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="linear"
-                android:startX="256" android:startY="0"
-                android:endX="256" android:endY="512">
-                <item android:offset="0" android:color="#FFFFB24D" />
-                <item android:offset="1" android:color="#FFE8472B" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <!-- Top gloss -->
-    <path android:pathData="M0,0H512V512H0Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="linear"
-                android:startX="256" android:startY="0"
-                android:endX="256" android:endY="512">
-                <item android:offset="0" android:color="#38FFFFFF" />
-                <item android:offset="0.5" android:color="#00FFFFFF" />
-                <item android:offset="1" android:color="#00FFFFFF" />
-            </gradient>
-        </aapt:attr>
-    </path>
+    <path
+        android:fillColor="#FFFB6D2E"
+        android:pathData="M0,0H512V512H0Z" />
 </vector>

@@ -4,13 +4,17 @@
     android:height="108dp"
     android:viewportWidth="512"
     android:viewportHeight="512">
-    <!-- Heated contact tip -->
-    <path
-        android:fillColor="#FF000000"
-        android:pathData="M228,338 H284 A22,22 0 0,1 306,360 V384 A22,22 0 0,1 284,406 H228 A22,22 0 0,1 206,384 V360 A22,22 0 0,1 228,338 Z" />
-    <!-- Device body with lanyard + power button cut out -->
-    <path
-        android:fillColor="#FF000000"
-        android:fillType="evenOdd"
-        android:pathData="M228,104 H284 A42,42 0 0,1 326,146 V322 A42,42 0 0,1 284,364 H228 A42,42 0 0,1 186,322 V146 A42,42 0 0,1 228,104 Z M241,146 a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0 Z M240,214 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0 Z" />
+    <group
+        android:pivotX="256" android:pivotY="256"
+        android:scaleX="0.87" android:scaleY="0.87">
+        <!-- Heated contact tip -->
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M228,338 H284 A22,22 0 0,1 306,360 V384 A22,22 0 0,1 284,406 H228 A22,22 0 0,1 206,384 V360 A22,22 0 0,1 228,338 Z" />
+        <!-- Device body with lanyard + power button cut out -->
+        <path
+            android:fillColor="#FF000000"
+            android:fillType="evenOdd"
+            android:pathData="M228,104 H284 A42,42 0 0,1 326,146 V322 A42,42 0 0,1 284,364 H228 A42,42 0 0,1 186,322 V146 A42,42 0 0,1 228,104 Z M241,146 a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0 Z M240,214 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0 Z" />
+    </group>
 </vector>

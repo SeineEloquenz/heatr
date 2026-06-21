@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffb24d"/>
-      <stop offset="1" stop-color="#e8472b"/>
-    </linearGradient>
     <linearGradient id="dev" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#3d4654"/>
       <stop offset="1" stop-color="#222933"/>
@@ -22,25 +18,27 @@
   </defs>
 
   <!-- Background squircle -->
-  <rect x="32" y="32" width="448" height="448" rx="120" fill="url(#bg)"/>
-  <rect x="32" y="32" width="448" height="448" rx="120" fill="url(#gloss)"/>
+  <rect x="32" y="32" width="448" height="448" rx="120" fill="#fb6d2e"/>
+  <rect x="32" y="32" width="448" height="448" rx="120" fill="none" stroke="#000000" stroke-opacity=".08" stroke-width="2"/>
 
-  <!-- Heat glow behind the contact tip -->
-  <ellipse cx="256" cy="372" rx="92" ry="70" fill="#ffd24d" opacity=".30"/>
-  <ellipse cx="256" cy="372" rx="64" ry="50" fill="#ffb13c" opacity=".40"/>
+  <g transform="translate(256 256) scale(.87) translate(-256 -256)">
+    <!-- Heat glow behind the contact tip -->
+    <ellipse cx="256" cy="372" rx="92" ry="70" fill="#ffae3c" opacity=".22"/>
+    <ellipse cx="256" cy="372" rx="64" ry="50" fill="#ff8a3c" opacity=".28"/>
 
-  <!-- Device body -->
-  <rect x="186" y="104" width="140" height="260" rx="42" fill="url(#dev)" stroke="#161b22" stroke-width="5"/>
-  <rect x="186" y="104" width="140" height="260" rx="42" fill="url(#gloss)"/>
+    <!-- Device body -->
+    <rect x="186" y="104" width="140" height="260" rx="42" fill="url(#dev)" stroke="#161b22" stroke-width="5"/>
+    <rect x="186" y="104" width="140" height="260" rx="42" fill="url(#gloss)"/>
 
-  <!-- Lanyard loop -->
-  <circle cx="256" cy="146" r="16" fill="none" stroke="#aab2c0" stroke-width="6"/>
+    <!-- Lanyard loop -->
+    <circle cx="256" cy="146" r="16" fill="none" stroke="#aab2c0" stroke-width="6"/>
 
-  <!-- Power button -->
-  <circle cx="256" cy="214" r="20" fill="none" stroke="#aab2c0" stroke-width="8"/>
-  <path d="M260 200 a4 4 0 0 0 -8 0 v12 a4 4 0 0 0 8 0 z" fill="#aab2c0"/>
+    <!-- Power button -->
+    <circle cx="256" cy="214" r="20" fill="none" stroke="#aab2c0" stroke-width="8"/>
+    <path d="M260 200 a4 4 0 0 0 -8 0 v12 a4 4 0 0 0 8 0 z" fill="#aab2c0"/>
 
-  <!-- Heated ceramic contact tip -->
-  <rect x="206" y="338" width="100" height="68" rx="22" fill="url(#hot)" stroke="#d83f22" stroke-width="4"/>
-  <ellipse cx="256" cy="362" rx="30" ry="18" fill="#fff6d6" opacity=".6"/>
+    <!-- Heated ceramic contact tip -->
+    <rect x="206" y="338" width="100" height="68" rx="22" fill="url(#hot)" stroke="#d83f22" stroke-width="4"/>
+    <ellipse cx="256" cy="362" rx="30" ry="18" fill="#fff6d6" opacity=".6"/>
+  </g>
 </svg>
