@@ -16,7 +16,7 @@ jobs:
       version_code: ${{ steps.version.outputs.version_code }}
       version_name: ${{ steps.version.outputs.version_name }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Read versionCode and versionName from Gradle
         id: version
         working-directory: ./android
@@ -36,7 +36,7 @@ jobs:
       - read-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Prepare Changelog
         working-directory: ./android
         run: |
@@ -54,7 +54,7 @@ jobs:
       - read-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Prepare Google Play release notes
         working-directory: ./android
         run: |
@@ -80,7 +80,7 @@ jobs:
     name: Build Release Apk
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Copy CI gradle.properties
         run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
       - name: Decode Keystore
@@ -115,7 +115,7 @@ jobs:
     name: Build Release Bundle
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Copy CI gradle.properties
         run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
       - name: Decode Keystore
