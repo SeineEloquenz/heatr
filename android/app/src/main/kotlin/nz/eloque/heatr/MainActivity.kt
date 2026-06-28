@@ -150,6 +150,16 @@ class MainActivity : ComponentActivity() {
         attachedDevice?.let { handleDeviceAttached(it) } ?: checkExistingDevices()
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.action == UsbManager.ACTION_USB_DEVICE_ATTACHED) {
+            @Suppress("DEPRECATION")
+            val device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+            device?.let { handleDeviceAttached(it) }
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(usbReceiver)
@@ -163,6 +173,7 @@ class MainActivity : ComponentActivity() {
 
     private fun handleDeviceAttached(device: UsbDevice) {
         if (!isSupported(device)) return
+        if (hasDevice && currentDevice?.deviceId == device.deviceId) return
         currentDevice = device
         hasDevice = true
         usbState = UsbState.Ready(device.productName ?: getString(R.string.unnamed_device))
