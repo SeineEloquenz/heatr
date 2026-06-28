@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
+import androidx.core.content.IntentCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import nz.eloque.heatr.api.Heatr
 import nz.eloque.heatr.ui.HeatrScaffold
@@ -73,8 +74,12 @@ class MainActivity : ComponentActivity() {
             ) {
                 when (intent.action) {
                     ACTION_USB_PERMISSION -> {
-                        @Suppress("DEPRECATION")
-                        val device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+                        val device: UsbDevice? =
+                            IntentCompat.getParcelableExtra(
+                                intent,
+                                UsbManager.EXTRA_DEVICE,
+                                UsbDevice::class.java,
+                            )
                         if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                             device?.let { openDevice(it) }
                         } else {
@@ -83,8 +88,12 @@ class MainActivity : ComponentActivity() {
                     }
 
                     UsbManager.ACTION_USB_DEVICE_ATTACHED -> {
-                        @Suppress("DEPRECATION")
-                        val device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+                        val device: UsbDevice? =
+                            IntentCompat.getParcelableExtra(
+                                intent,
+                                UsbManager.EXTRA_DEVICE,
+                                UsbDevice::class.java,
+                            )
                         device?.let { handleDeviceAttached(it) }
                     }
 
@@ -145,8 +154,10 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        @Suppress("DEPRECATION")
-        val attachedDevice = intent?.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
+        val attachedDevice =
+            intent?.let {
+                IntentCompat.getParcelableExtra(it, UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
+            }
         attachedDevice?.let { handleDeviceAttached(it) } ?: checkExistingDevices()
     }
 
@@ -154,8 +165,12 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         if (intent.action == UsbManager.ACTION_USB_DEVICE_ATTACHED) {
-            @Suppress("DEPRECATION")
-            val device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+            val device: UsbDevice? =
+                IntentCompat.getParcelableExtra(
+                    intent,
+                    UsbManager.EXTRA_DEVICE,
+                    UsbDevice::class.java,
+                )
             device?.let { handleDeviceAttached(it) }
         }
     }
