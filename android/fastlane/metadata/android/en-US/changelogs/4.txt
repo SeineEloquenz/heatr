@@ -1,0 +1,1 @@
+* Fix treatment progress not updating in release builds
