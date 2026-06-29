@@ -1,0 +1,2 @@
+* Fix treatment switching to "applying" too early
+* Fix spurious errors during treatment that still completed normally
