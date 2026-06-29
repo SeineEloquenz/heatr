@@ -46,9 +46,14 @@ impl MockBulkTransferDevice {
             let t = elapsed / HEATING_SECS;
             (0x80, 0x01, TEMP_COLD + (TEMP_PEAK - TEMP_COLD) * t)
         } else if elapsed < HEATING_SECS + APPLYING_SECS {
-            // Applying: element off, temperature drifts back down.
+            // Applying (hold/regulation): the phase byte stays at the hold
+            // value (0x02) while the element cycles on and off to regulate
+            // temperature, so `flags` toggles. The reported phase must not
+            // flicker because of that.
             let t = (elapsed - HEATING_SECS) / APPLYING_SECS;
-            (0x00, 0x01, TEMP_PEAK - (TEMP_PEAK - TEMP_COLD) * 0.5 * t)
+            let element_on = (elapsed * 2.0) as u32 % 2 == 0;
+            let flags = if element_on { 0x80 } else { 0x00 };
+            (flags, 0x02, TEMP_PEAK - (TEMP_PEAK - TEMP_COLD) * 0.3 * t)
         } else {
             // Done: fully idle.
             (0x00, 0x00, TEMP_COLD)

@@ -65,12 +65,28 @@ pub struct HeatingStatus {
 }
 
 const MIN_RESPONSE_LEN: usize = 2;
+/// Minimum length needed to read the status fields (`temp`, `flags`, `phase`).
+const STATUS_RESPONSE_LEN: usize = 6;
 /// Maximum number of self-test retries.
 const SELF_TEST_RETRIES: u8 = 10;
+/// Number of consecutive transient USB errors tolerated while monitoring a
+/// cycle before the error is surfaced to the caller.
+const MONITOR_TRANSIENT_RETRIES: u8 = 5;
 /// Hardcoded unique-ID region address (not returned by GET_DEVICE_INFO).
 const UNIQUE_ID_BASE: u16 = 0xFFC0;
 /// Interval between status polls while monitoring a treatment cycle.
 const POLL_INTERVAL: std::time::Duration = std::time::Duration::from_millis(200);
+
+/// Whether an error is a transient USB-bus hiccup worth retrying mid-cycle
+/// (timeout, cancellation, momentarily garbled read) rather than a hard fault.
+fn is_transient(err: &HeatrError) -> bool {
+    matches!(
+        err,
+        HeatrError::Usb(_)
+            | HeatrError::Transfer(_)
+            | HeatrError::UnexpectedResponseLength { .. }
+    )
+}
 
 /// A "heat it" device handle.
 pub struct HeatItDevice {
@@ -149,14 +165,28 @@ impl HeatItDevice {
     pub async fn poll_status(&mut self) -> Result<HeatingStatus> {
         let r = self.get_status().await?;
         self.poll().await?;
+        if r.len() < STATUS_RESPONSE_LEN {
+            return Err(HeatrError::UnexpectedResponseLength {
+                got: r.len(),
+                expected: STATUS_RESPONSE_LEN,
+            });
+        }
         let flags = r[4];
-        let phase = r[5];
-        let phase = if flags == 0x80 {
-            HeatingPhase::Heating
-        } else if phase != 0x00 {
-            HeatingPhase::Applying
-        } else {
-            HeatingPhase::Done
+        let phase_code = r[5];
+        // The device's own `phase` byte is the authoritative cycle state. We
+        // must *not* derive the phase from `flags` (the heating-element on/off
+        // bit) alone: during the hold/treatment phase the element cycles on and
+        // off to regulate temperature, so `flags` toggles rapidly and would
+        // flip the reported phase Heating<->Applying long before the treatment
+        // actually reaches the apply stage.
+        let phase = match phase_code {
+            0x01 => HeatingPhase::Heating, // ramp-up
+            0x00 if flags == 0x80 => HeatingPhase::Heating, // element on, phase not yet latched
+            0x00 => HeatingPhase::Done,    // idle / finished
+            // 0x02 = regulation/hold = treatment being applied. Treat any other
+            // non-zero code as Applying too, since the protocol is
+            // reverse-engineered and unknown codes mean the cycle is ongoing.
+            _ => HeatingPhase::Applying,
         };
         Ok(HeatingStatus {
             phase,
@@ -183,12 +213,27 @@ impl HeatItDevice {
             if !first {
                 Delay::new(POLL_INTERVAL).await;
             }
-            match device.poll_status().await {
-                Ok(status) => {
-                    let done = status.phase == HeatingPhase::Done;
-                    Some((Ok(status), (device, false, done)))
+            // Retry transient USB hiccups (timeouts, cancellations, garbled
+            // reads) so a single dropped transfer doesn't abort a treatment
+            // that is otherwise running fine on the device. Only a sustained
+            // failure is surfaced as an error.
+            let mut transient_retries = 0u8;
+            loop {
+                match device.poll_status().await {
+                    Ok(status) => {
+                        let done = status.phase == HeatingPhase::Done;
+                        return Some((Ok(status), (device, false, done)));
+                    }
+                    Err(e) if is_transient(&e) && transient_retries < MONITOR_TRANSIENT_RETRIES => {
+                        transient_retries += 1;
+                        debug!(
+                            "Transient poll error (retry {}/{}): {}",
+                            transient_retries, MONITOR_TRANSIENT_RETRIES, e
+                        );
+                        Delay::new(POLL_INTERVAL).await;
+                    }
+                    Err(e) => return Some((Err(e), (device, false, true))),
                 }
-                Err(e) => Some((Err(e), (device, false, true))),
             }
         })
     }

@@ -9,6 +9,7 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use futures_util::{StreamExt, pin_mut};
 use heatr::backend::BulkTransferDevice;
+use heatr::error::HeatrError;
 use heatr::heat_it::{HeatItDevice, HeatingPhase, Temperature};
 use heatr::prefs::{Duration, Generation, Preferences, SkinSensitivity};
 
@@ -285,7 +286,7 @@ fn monitor_yields_statuses_until_done_without_auto_stop() {
         let (backend, requests) = MockBackend::new([
             status_response(0x80, 0x01, 0x50), // heating
             poll_echo.clone(),
-            status_response(0x00, 0x01, 0xE1), // applying
+            status_response(0x00, 0x02, 0xE1), // applying
             poll_echo.clone(),
             status_response(0x00, 0x00, 0x46), // done
             poll_echo.clone(),
@@ -342,6 +343,139 @@ fn cancelling_monitor_by_dropping_stream_allows_stop_heating() {
             requests.lock().unwrap().last().map(Vec::as_slice),
             Some(STOP_HEATING),
             "STOP_HEATING must be the last command after cancellation"
+        );
+    });
+}
+
+/// During the hold phase the element regulates temperature by switching on and
+/// off, so `flags` toggles while the device's `phase` byte stays at 0x02. The
+/// reported phase must stay Applying and never flicker back to Heating.
+#[test]
+fn hold_phase_stays_applying_while_element_cycles() {
+    pollster::block_on(async {
+        let poll_echo = vec![0u8; 12];
+        let (backend, _requests) = MockBackend::new([
+            status_response(0x80, 0x02, 0xE1), // hold, element on
+            poll_echo.clone(),
+            status_response(0x00, 0x02, 0xE0), // hold, element off (regulating)
+            poll_echo.clone(),
+            status_response(0x80, 0x02, 0xE1), // hold, element on again
+            poll_echo.clone(),
+            status_response(0x00, 0x00, 0x46), // done
+            poll_echo.clone(),
+        ]);
+        let mut device = HeatItDevice::new(Box::new(backend));
+
+        let mut phases = Vec::new();
+        {
+            let stream = device.monitor();
+            pin_mut!(stream);
+            while let Some(status) = stream.next().await {
+                phases.push(status.unwrap().phase);
+            }
+        }
+
+        assert_eq!(
+            phases,
+            [
+                HeatingPhase::Applying,
+                HeatingPhase::Applying,
+                HeatingPhase::Applying,
+                HeatingPhase::Done,
+            ]
+        );
+    });
+}
+
+/// The heating element can briefly switch off during ramp-up (phase still
+/// 0x01). That must be reported as Heating, not as a premature Applying.
+#[test]
+fn element_off_during_rampup_is_still_heating() {
+    pollster::block_on(async {
+        let (backend, _requests) =
+            MockBackend::new([status_response(0x00, 0x01, 0xD0), vec![0u8; 12]]);
+        let mut device = HeatItDevice::new(Box::new(backend));
+        assert_eq!(
+            device.poll_status().await.unwrap().phase,
+            HeatingPhase::Heating
+        );
+    });
+}
+
+/// A backend that replays a scripted sequence of results (errors included).
+struct ScriptedBackend {
+    results: VecDeque<heatr::error::Result<Vec<u8>>>,
+}
+
+#[async_trait]
+impl BulkTransferDevice for ScriptedBackend {
+    async fn bulk_transfer(&mut self, _request: &[u8]) -> heatr::error::Result<Vec<u8>> {
+        self.results
+            .pop_front()
+            .unwrap_or_else(|| Ok(vec![0u8; 12]))
+    }
+
+    fn product_name(&self) -> Option<String> {
+        Some("scripted".into())
+    }
+
+    fn serial_number(&self) -> Option<String> {
+        None
+    }
+}
+
+fn transient_err() -> heatr::error::Result<Vec<u8>> {
+    Err(HeatrError::Transfer(
+        nusb::transfer::TransferError::Cancelled,
+    ))
+}
+
+/// Transient USB errors mid-cycle are retried and never surfaced, as long as
+/// the device recovers. A single dropped transfer must not abort a treatment
+/// that is otherwise running fine.
+#[test]
+fn monitor_retries_transient_errors() {
+    pollster::block_on(async {
+        let backend = ScriptedBackend {
+            results: VecDeque::from(vec![
+                transient_err(),                       // get_status hiccup
+                transient_err(),                       // get_status hiccup
+                Ok(status_response(0x80, 0x01, 0x50)), // get_status ok -> heating
+                Ok(vec![0u8; 12]),                     // poll echo
+                Ok(status_response(0x00, 0x00, 0x46)), // get_status ok -> done
+                Ok(vec![0u8; 12]),                     // poll echo
+            ]),
+        };
+        let mut device = HeatItDevice::new(Box::new(backend));
+
+        let mut phases = Vec::new();
+        {
+            let stream = device.monitor();
+            pin_mut!(stream);
+            while let Some(status) = stream.next().await {
+                phases.push(status.expect("transient errors must not surface").phase);
+            }
+        }
+
+        assert_eq!(phases, [HeatingPhase::Heating, HeatingPhase::Done]);
+    });
+}
+
+/// A sustained failure (beyond the retry budget) is still surfaced as an error.
+#[test]
+fn monitor_surfaces_persistent_errors() {
+    pollster::block_on(async {
+        let backend = ScriptedBackend {
+            results: (0..20).map(|_| transient_err()).collect(),
+        };
+        let mut device = HeatItDevice::new(Box::new(backend));
+
+        let stream = device.monitor();
+        pin_mut!(stream);
+        let first = stream.next().await.expect("stream must yield");
+        assert!(
+            first.is_err(),
+            "a persistent failure should surface as an error"
         );
     });
 }
