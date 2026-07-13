@@ -16,4 +16,4 @@ thiserror = "2.0.18"
 tracing = "0.1.44"
 
 [dev-dependencies]
-pollster = "0.4"
+pollster = "1.0"
