@@ -21,19 +21,14 @@
         "aarch64-linux"
       ];
 
-      devSystems = [ "x86_64-linux" ];
-
-      forSystems =
-        systems':
+      forAllSystems =
         f:
         builtins.listToAttrs (
           map (system: {
             name = system;
             value = f system;
-          }) systems'
+          }) systems
         );
-
-      forAllSystems = forSystems systems;
     in
     {
       packages = forAllSystems (
@@ -56,7 +51,7 @@
         };
       });
 
-      devShells = forSystems devSystems (
+      devShells = forAllSystems (
         system:
         import ./shell.nix {
           inherit system nixpkgs rust-overlay;

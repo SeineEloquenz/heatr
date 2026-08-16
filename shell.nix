@@ -24,11 +24,14 @@ let
 
   jdk = pkgs.jdk25;
 
+  # The emulator and system images have no aarch64-linux host build
+  withEmulator = system == "x86_64-linux";
+
   androidSdk = pkgs.androidenv.composeAndroidPackages {
     inherit buildToolsVersions platformVersions ndkVersions;
     includeNDK = true;
-    includeEmulator = true;
-    includeSystemImages = true;
+    includeEmulator = withEmulator;
+    includeSystemImages = withEmulator;
     systemImageTypes = [ "google_apis_playstore" ];
     abiVersions = [ "x86_64" ];
   };
